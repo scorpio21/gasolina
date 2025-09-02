@@ -9,12 +9,18 @@ $base = isset($BASE_URL) ? $BASE_URL : '.';
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="menu">
-      <ul class="navbar-nav ms-auto">
+      <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
         <li class="nav-item">
           <a class="nav-link" href="<?php echo $base; ?>/pages/formulario.php">➕ Nuevo Repostaje</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="<?php echo $base; ?>/pages/listar.php">📊 Historial</a>
+        </li>
+        <li class="nav-item">
+          <button id="toggleTema" type="button" class="btn btn-outline-light btn-sm" title="Cambiar tema">
+            <span class="d-inline" id="iconoTema" aria-hidden="true">🌙</span>
+            <span class="visually-hidden">Cambiar tema</span>
+          </button>
         </li>
       </ul>
     </div>

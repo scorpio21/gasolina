@@ -4,6 +4,69 @@
   'use strict';
   // Inicialización básica
 
+  // =====================
+  // Tema oscuro / claro
+  // =====================
+  const THEME_KEY = 'tema';
+  const getStoredTheme = () => {
+    try { return localStorage.getItem(THEME_KEY); } catch(_) { return null; }
+  };
+  const storeTheme = (t) => { try { localStorage.setItem(THEME_KEY, t); } catch(_) {} };
+  const applyThemeToBody = (t) => {
+    const oscuro = t === 'oscuro';
+    document.body.classList.toggle('tema-oscuro', oscuro);
+    const iconEl = document.getElementById('iconoTema');
+    if (iconEl) iconEl.textContent = oscuro ? '☀️' : '🌙';
+    return oscuro;
+  };
+  const updateChartsTheme = (oscuro) => {
+    if (!window.Chart) return;
+    const colorTexto = oscuro ? '#e5e5e5' : '#6c757d';
+    const gridColor = oscuro ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+    try {
+      // Actualizar defaults para futuros charts
+      Chart.defaults.color = colorTexto;
+    } catch(_) {}
+    const ids = ['graficoGasto','graficoPrecio','graficoConsumo','graficoLitros'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const chart = Chart.getChart(el);
+      if (!chart || !chart.options) return;
+      const opts = chart.options;
+      try {
+        if (opts.plugins && opts.plugins.legend && opts.plugins.legend.labels) {
+          opts.plugins.legend.labels.color = colorTexto;
+        }
+        if (opts.scales) {
+          Object.keys(opts.scales).forEach(k => {
+            if (opts.scales[k].ticks) opts.scales[k].ticks.color = colorTexto;
+            if (opts.scales[k].grid) opts.scales[k].grid.color = gridColor;
+          });
+        }
+      } catch(_) {}
+      chart.update('none');
+    });
+  };
+  const initTheme = () => {
+    let t = getStoredTheme();
+    if (t !== 'oscuro' && t !== 'claro') t = 'claro';
+    const oscuro = applyThemeToBody(t);
+    updateChartsTheme(oscuro);
+    const btn = document.getElementById('toggleTema');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        const nuevo = document.body.classList.contains('tema-oscuro') ? 'claro' : 'oscuro';
+        storeTheme(nuevo);
+        const os = applyThemeToBody(nuevo);
+        updateChartsTheme(os);
+      });
+    }
+    return t;
+  };
+  // Inicializar tema cuanto antes
+  const temaInicial = initTheme();
+
   // Graficas del dashboard (si existen datos y Chart.js)
   const dataEl = document.getElementById('dashboard-data');
   if (dataEl && window.Chart) {
@@ -110,6 +173,8 @@
       try {
         Chart.defaults.responsive = true;
         Chart.defaults.maintainAspectRatio = false;
+        // Color de texto según tema actual
+        Chart.defaults.color = document.body.classList.contains('tema-oscuro') ? '#e5e5e5' : '#6c757d';
       } catch (_) {}
 
       // Preparar datos cronológicos

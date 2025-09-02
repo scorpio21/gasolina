@@ -27,3 +27,44 @@ body {
   position: relative;
   height: 300px;
 }
+
+/* ===================== */
+/* Tema oscuro           */
+/* ===================== */
+body.tema-oscuro {
+  background-color: #121212;
+  color: #e5e5e5;
+}
+
+/* Tarjetas y contenedores claros en modo normal: oscurecer en tema oscuro */
+body.tema-oscuro .bg-white,
+body.tema-oscuro .card,
+body.tema-oscuro section#historial-export {
+  background-color: #1e1e1e !important;
+  color: #e5e5e5;
+}
+
+/* Tablas */
+body.tema-oscuro .table {
+  color: #e5e5e5;
+}
+body.tema-oscuro .table-striped tbody tr:nth-of-type(odd) {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+body.tema-oscuro .table thead,
+body.tema-oscuro .table-dark {
+  background-color: #222 !important;
+  color: #f1f1f1 !important;
+}
+body.tema-oscuro .table td,
+body.tema-oscuro .table th {
+  border-color: #2b2b2b !important;
+}
+
+/* Links */
+body.tema-oscuro a { color: #9ecbff; }
+body.tema-oscuro a:hover { color: #c2ddff; }
+
+/* Botones claros sobre fondo oscuro */
+body.tema-oscuro .btn-outline-light { border-color: #cfcfcf; color: #f5f5f5; }
+body.tema-oscuro .btn-outline-light:hover { background-color: #f5f5f5; color: #222; }
