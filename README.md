@@ -128,7 +128,7 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 - Cálculo automático de importe y consumo (L/100km).
 - Listado histórico ordenado por fecha.
 - Historial con paginación (10/20 por página) y orden por fecha ASC/DESC.
-- Gráficas en `pages/listar.php` con selector de rango (5/10/30) y opción de mostrar tendencia (media móvil SMA3).
+- Gráficas en `pages/listar.php` con selector de rango (5/10/30) y opción de mostrar tendencia (media móvil SMA3). Optimizadas para iOS Safari con Chart.js 3.9.1 y creación condicional vía `requestAnimationFrame` solo en iOS.
 - UI con Bootstrap 5 y navegación simple.
 - Seguridad básica en `.htaccess` (bloqueo de dotfiles y carpeta `sql/`).
 - Exportación a PDF del historial desde `pages/listar.php` con diseño de cabecera/pie y paginación automática.
@@ -229,6 +229,9 @@ Nota: En el historial (`pages/listar.php`) puedes cambiar el orden de la columna
 - Variables `DB_*` vacías: algunos hostings restringen `putenv/getenv`. Usa `app/env.php` con asignación también a `$_ENV/$_SERVER` (ejemplo en este README).
 - Inserción falla al guardar: no incluyas la columna `importe_total` en el `INSERT` (ya corregido en `pages/formulario.php`).
 - Redirección a HTTPS falla: comenta temporalmente la regla en `.htaccess` hasta tener SSL.
+- Error de sintaxis en `manifest.webmanifest` en local: se produce si el servidor redirige HTTP→HTTPS y devuelve HTML para el manifest. Se ha añadido una excepción en `.htaccess` para `localhost` y `127.0.0.1`.
+- Iconos del manifest: los iconos referenciados existen en `img/` (`gasolina-180.png`, `gasolina-152.png`). Si cambias los tamaños, actualiza `manifest.webmanifest`.
+- Gráficas en iOS Safari no renderizan o aparecen en blanco: aseguramos altura mínima del canvas únicamente en iOS Safari y desactivamos animación allí. En desktop no se fuerza altura y se mantiene aspecto normal. Limpia caché si venías de una versión anterior.
 
 ## 8) Preguntas frecuentes (FAQ)
 

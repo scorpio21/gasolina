@@ -13,3 +13,17 @@ body {
 .card .card-title {
   font-weight: 600;
 }
+
+/* Evitar que los gráficos crezcan demasiado en desktop */
+#graficoGasto,
+#graficoLitros,
+#graficoPrecio,
+#graficoConsumo {
+  max-height: 240px;
+}
+
+/* Contenedor de gráficos: altura explícita para Safari */
+.chart-container {
+  position: relative;
+  height: 300px;
+}

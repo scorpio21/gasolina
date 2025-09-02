@@ -18,8 +18,82 @@
       // Utilidades
       const toChrono = arr => (arr || []).slice().reverse();
       const isNum = v => typeof v === 'number' && !isNaN(v) && isFinite(v);
+      const toNumArr = (arr) => (arr || []).map(v => (v === null || v === '' ? null : Number(v)));
+      const qs = new URLSearchParams(window.location.search);
+      const debug = qs.get('debug') === '1';
+      // Panel de depuración en página (útil en iPhone sin consola)
+      let debugPanel = null;
+      const ensureDebugPanel = () => {
+        if (!debug || debugPanel) return debugPanel;
+        const panel = document.createElement('div');
+        panel.id = 'debug-charts-panel';
+        panel.style.position = 'fixed';
+        panel.style.bottom = '8px';
+        panel.style.right = '8px';
+        panel.style.zIndex = '9999';
+        panel.style.maxWidth = '90vw';
+        panel.style.maxHeight = '45vh';
+        panel.style.overflow = 'auto';
+        panel.style.background = 'rgba(0,0,0,0.8)';
+        panel.style.color = '#fff';
+        panel.style.font = '12px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
+        panel.style.padding = '8px 10px';
+        panel.style.borderRadius = '6px';
+        panel.style.boxShadow = '0 2px 8px rgba(0,0,0,0.35)';
+        const title = document.createElement('div');
+        title.textContent = 'DEBUG Charts';
+        title.style.fontWeight = '600';
+        title.style.marginBottom = '6px';
+        const pre = document.createElement('pre');
+        pre.style.margin = '0';
+        pre.style.whiteSpace = 'pre-wrap';
+        pre.style.wordBreak = 'break-word';
+        panel.appendChild(title);
+        panel.appendChild(pre);
+        document.body.appendChild(panel);
+        debugPanel = { panel, pre };
+        return debugPanel;
+      };
+      const dlog = (...args) => {
+        if (!debug) return;
+        // Consola
+        try { console.log('[DEBUG Charts]', ...args); } catch (_) {}
+        // Panel visible
+        try {
+          const dp = ensureDebugPanel();
+          const line = args.map(a => {
+            try { return typeof a === 'string' ? a : JSON.stringify(a); }
+            catch (_) { return String(a); }
+          }).join(' ');
+          dp.pre.textContent += (dp.pre.textContent ? '\n' : '') + line;
+        } catch (_) {}
+      };
+      const ua = navigator.userAgent || '';
+      const isIOS = /(iPad|iPhone|iPod)/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(ua);
+      const isIOSSafari = isIOS && isSafari;
+      if (debug) {
+        dlog('Chart.js version:', Chart && Chart.version);
+        dlog('UA:', ua);
+        dlog('isIOS:', isIOS, 'isSafari:', isSafari, 'isIOSSafari:', isIOSSafari);
+      }
+      const createChart = (canvas, config) => {
+        if (isIOSSafari) {
+          return requestAnimationFrame(() => new Chart(canvas.getContext('2d'), config));
+        }
+        return new Chart(canvas.getContext('2d'), config);
+      };
+      const ensureCanvasSize = (canvas, h = 240) => {
+        try {
+          const ch = canvas.clientHeight || canvas.height || 0;
+          if (isIOSSafari && ch === 0) {
+            canvas.style.height = h + 'px';
+            canvas.height = h;
+          }
+        } catch (_) {}
+      };
       const sma = (arr, w = 3) => {
-        const out = new Array(arr.length).fill(NaN);
+        const out = new Array(arr.length).fill(null);
         for (let i = 0; i <= arr.length - w; i++) {
           let sum = 0, ok = true;
           for (let j = 0; j < w; j++) {
@@ -32,17 +106,64 @@
         return out;
       };
 
+      // Defaults globales de Chart.js (alineado con app que funciona)
+      try {
+        Chart.defaults.responsive = true;
+        Chart.defaults.maintainAspectRatio = false;
+      } catch (_) {}
+
       // Preparar datos cronológicos
       const fechasC = toChrono(fechas);
-      const importesC = toChrono(importes);
-      const litrosC = toChrono(litros);
-      const preciosC = toChrono(precios);
-      const consumosC = toChrono((consumos || []).map(v => (v === null ? NaN : v)));
+      const importesC = toChrono(toNumArr(importes));
+      const litrosC = toChrono(toNumArr(litros));
+      const preciosC = toChrono(toNumArr(precios));
+      const consumosC = toChrono(toNumArr(consumos));
+      dlog('Longitudes:', {
+        fechas: fechasC.length,
+        importes: importesC.length,
+        litros: litrosC.length,
+        precios: preciosC.length,
+        consumos: consumosC.length,
+        rango
+      });
+
+      const logCanvasInfo = (canvas, nombre) => {
+        try {
+          const cont = canvas.closest('.chart-container');
+          if (debug && cont) {
+            cont.style.outline = '1px dashed #dc3545';
+          }
+          const cs = window.getComputedStyle(canvas);
+          dlog(`${nombre} sizes`, {
+            container: cont ? { w: cont.offsetWidth, h: cont.offsetHeight } : null,
+            canvas: {
+              ow: canvas.offsetWidth, oh: canvas.offsetHeight,
+              cw: canvas.clientWidth, ch: canvas.clientHeight,
+              attrH: canvas.getAttribute('height'),
+              display: cs.display, visibility: cs.visibility
+            }
+          });
+        } catch (e) { dlog('logCanvasInfo error', e); }
+      };
+
+      const markChartReady = (canvas, nombre) => {
+        if (isIOSSafari) {
+          requestAnimationFrame(() => {
+            const chart = Chart.getChart(canvas);
+            dlog(`${nombre} creado:`, !!chart);
+          });
+        } else {
+          const chart = Chart.getChart(canvas);
+          dlog(`${nombre} creado:`, !!chart);
+        }
+      };
 
       // Grafico de Gasto
       const ctxGasto = document.getElementById('graficoGasto');
-      if (ctxGasto) {
-        new Chart(ctxGasto, {
+      if (ctxGasto && ctxGasto.getContext) {
+        logCanvasInfo(ctxGasto, 'Gasto');
+        ensureCanvasSize(ctxGasto);
+        createChart(ctxGasto, {
           type: 'line',
           data: {
             labels: fechasC,
@@ -67,16 +188,22 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: !isIOSSafari,
+            animation: isIOSSafari ? false : true,
+            normalized: true,
             plugins: { legend: { display: false } },
             scales: { y: { beginAtZero: true } }
           }
         });
+        markChartReady(ctxGasto, 'Gasto');
       }
 
       // Grafico de Precio/L
       const ctxPrecio = document.getElementById('graficoPrecio');
-      if (ctxPrecio) {
-        new Chart(ctxPrecio, {
+      if (ctxPrecio && ctxPrecio.getContext) {
+        logCanvasInfo(ctxPrecio, 'Precio/L');
+        ensureCanvasSize(ctxPrecio);
+        createChart(ctxPrecio, {
           type: 'line',
           data: {
             labels: fechasC,
@@ -105,12 +232,15 @@
             scales: { y: { beginAtZero: true } }
           }
         });
+        markChartReady(ctxPrecio, 'Precio/L');
       }
 
       // Grafico de Consumo (L/100km)
       const ctxConsumo = document.getElementById('graficoConsumo');
-      if (ctxConsumo) {
-        new Chart(ctxConsumo, {
+      if (ctxConsumo && ctxConsumo.getContext) {
+        logCanvasInfo(ctxConsumo, 'Consumo');
+        ensureCanvasSize(ctxConsumo);
+        createChart(ctxConsumo, {
           type: 'line',
           data: {
             labels: fechasC,
@@ -135,17 +265,23 @@
           },
           options: {
             responsive: true,
+            maintainAspectRatio: !isIOSSafari,
+            animation: isIOSSafari ? false : true,
+            normalized: true,
             plugins: { legend: { display: false } },
             spanGaps: false,
             scales: { y: { beginAtZero: true } }
           }
         });
+        markChartReady(ctxConsumo, 'Consumo');
       }
 
       // Grafico de Litros
       const ctxLitros = document.getElementById('graficoLitros');
-      if (ctxLitros) {
-        new Chart(ctxLitros, {
+      if (ctxLitros && ctxLitros.getContext) {
+        logCanvasInfo(ctxLitros, 'Litros');
+        ensureCanvasSize(ctxLitros);
+        createChart(ctxLitros, {
           type: 'bar',
           data: {
             labels: fechasC,

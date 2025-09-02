@@ -193,13 +193,13 @@ if ($resGraficas) {
     <div class="col-md-6">
       <div class="card p-3 shadow-sm">
         <h5 class="text-center">Gasto (€)</h5>
-        <canvas id="graficoGasto" height="180"></canvas>
+        <div class="chart-container"><canvas id="graficoGasto"></canvas></div>
       </div>
     </div>
     <div class="col-md-6">
       <div class="card p-3 shadow-sm">
         <h5 class="text-center">Litros</h5>
-        <canvas id="graficoLitros" height="180"></canvas>
+        <div class="chart-container"><canvas id="graficoLitros"></canvas></div>
       </div>
     </div>
   </div>
@@ -207,13 +207,13 @@ if ($resGraficas) {
     <div class="col-md-6">
       <div class="card p-3 shadow-sm">
         <h5 class="text-center">Precio/L (€)</h5>
-        <canvas id="graficoPrecio" height="180"></canvas>
+        <div class="chart-container"><canvas id="graficoPrecio"></canvas></div>
       </div>
     </div>
     <div class="col-md-6">
       <div class="card p-3 shadow-sm">
         <h5 class="text-center">Consumo (L/100km)</h5>
-        <canvas id="graficoConsumo" height="180"></canvas>
+        <div class="chart-container"><canvas id="graficoConsumo"></canvas></div>
       </div>
     </div>
   </div>
@@ -221,11 +221,11 @@ if ($resGraficas) {
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Librería de gráficos -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 <!-- Exportación a PDF (cliente) -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-<script src="../js/main.js"></script>
+<script src="../js/main.js?v=20250902"></script>
 <script src="../js/export-pdf.js"></script>
 </body>
 </html>
