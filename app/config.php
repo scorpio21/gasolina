@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
 
+// Carga variables locales si existe app/env.php (no se versiona)
+if (file_exists(__DIR__ . '/env.php')) {
+    require __DIR__ . '/env.php';
+}
+
 /**
  * Retorna una conexión mysqli reutilizable usando variables de entorno.
  * Variables esperadas: DB_HOST, DB_USER, DB_PASS, DB_NAME
