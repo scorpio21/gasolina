@@ -1,0 +1,11 @@
+# Archivos y carpetas a ignorar
+/vendor/
+/node_modules/
+.env
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+/.phpunit.result.cache
+composer.lock

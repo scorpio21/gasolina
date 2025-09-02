@@ -1,0 +1,15 @@
+/* Estilos generales del proyecto Gasolina */
+/* Mantener CSS separado y minimalista; extender según sea necesario. */
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.table th {
+  white-space: nowrap;
+}
+
+.card .card-title {
+  font-weight: 600;
+}
