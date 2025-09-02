@@ -37,6 +37,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <title>Nuevo Repostaje</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="../css/main.css" rel="stylesheet">
+  <!-- Favicon (escritorio) -->
+  <link rel="icon" type="image/x-icon" href="/img/gasolina.ico">
+  <!-- Apple Touch Icons (iOS - pantalla de inicio) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/gasolina-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/img/gasolina-152.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/img/gasolina-120.png">
+  <!-- PWA manifest (opcional) -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <!-- Ajustes iOS para web app -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- Ajustes Android/Chrome PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gasolina">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
 <body class="bg-light">
 <?php include __DIR__ . "/../includes/navbar.php"; ?>

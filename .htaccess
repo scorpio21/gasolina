@@ -18,6 +18,9 @@ Options -Indexes
   RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 </IfModule>
 
+# MIME para Web App Manifest
+AddType application/manifest+json .webmanifest
+
 # Variables de entorno para conexión a BD (solo en producción)
 # Descomenta y rellena en el servidor (no subas secretos al repo)
 # SetEnv DB_HOST sqlXXX.epizy.com

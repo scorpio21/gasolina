@@ -18,10 +18,22 @@ $totales = $res ? $res->fetch_assoc() : [
     'consumo_medio' => 0,
 ];
 
-// Últimos 5 repostajes
-$sql2 = "SELECT fecha, km_actuales, litros, precio_litro, importe_total 
-         FROM consumos ORDER BY fecha DESC LIMIT 5";
+// Selección de rango para dashboard (5/10/30)
+$rangoPermitido = [5, 10, 30];
+$r = isset($_GET['r']) ? (int)$_GET['r'] : 5;
+if (!in_array($r, $rangoPermitido, true)) { $r = 5; }
+
+// Últimos N repostajes
+$sql2 = "SELECT fecha, km_actuales, litros, precio_litro, importe_total, consumo_100km 
+         FROM consumos ORDER BY fecha DESC LIMIT $r";
 $ultimos = $conn->query($sql2);
+// Convertir resultado en array para la tabla
+$ultimosArr = [];
+if ($ultimos) {
+    while ($row = $ultimos->fetch_assoc()) {
+        $ultimosArr[] = $row;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -30,6 +42,20 @@ $ultimos = $conn->query($sql2);
   <title>Dashboard - Control Gasolina</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="css/main.css" rel="stylesheet">
+  <!-- Favicon (escritorio) -->
+  <link rel="icon" type="image/x-icon" href="/img/gasolina.ico">
+  <!-- Apple Touch Icons (iOS - pantalla de inicio) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/gasolina-180.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/img/gasolina-152.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/img/gasolina-120.png">
+  <!-- PWA manifest (opcional) -->
+  <link rel="manifest" href="/manifest.webmanifest">
+  <!-- Ajustes iOS para web app -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- Ajustes Android/Chrome PWA -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Gasolina">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
 <body class="bg-light">
 <?php include __DIR__ . "/includes/navbar.php"; ?>
@@ -70,7 +96,17 @@ $ultimos = $conn->query($sql2);
     </div>
   </div>
 
-  <h3 class="mb-3">📅 Últimos 5 Repostajes</h3>
+  <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
+    <h3 class="mb-0">📅 Últimos <?php echo (int)$r; ?> Repostajes</h3>
+    <form method="get" class="d-flex align-items-center gap-2">
+      <label for="rango" class="form-label mb-0">Rango:</label>
+      <select id="rango" name="r" class="form-select form-select-sm" onchange="this.form.submit()">
+        <option value="5" <?php echo $r===5?'selected':''; ?>>5</option>
+        <option value="10" <?php echo $r===10?'selected':''; ?>>10</option>
+        <option value="30" <?php echo $r===30?'selected':''; ?>>30</option>
+      </select>
+    </form>
+  </div>
   <div class="table-responsive">
     <table class="table table-striped table-bordered text-center">
       <thead class="table-dark">
@@ -83,8 +119,8 @@ $ultimos = $conn->query($sql2);
         </tr>
       </thead>
       <tbody>
-        <?php if ($ultimos && $ultimos->num_rows > 0): ?>
-          <?php while($row = $ultimos->fetch_assoc()): ?>
+        <?php if (!empty($ultimosArr)): ?>
+          <?php foreach($ultimosArr as $row): ?>
             <tr>
               <td><?php echo e($row['fecha']); ?></td>
               <td><?php echo e((string)$row['km_actuales']); ?></td>
@@ -92,13 +128,15 @@ $ultimos = $conn->query($sql2);
               <td><?php echo e(number_format((float)$row['precio_litro'], 2)); ?></td>
               <td><?php echo e(number_format((float)$row['importe_total'], 2)); ?></td>
             </tr>
-          <?php endwhile; ?>
+          <?php endforeach; ?>
         <?php else: ?>
           <tr><td colspan="5">No hay registros aún</td></tr>
         <?php endif; ?>
       </tbody>
     </table>
   </div>
+
+  
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

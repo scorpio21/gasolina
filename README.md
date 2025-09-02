@@ -43,11 +43,11 @@ Aplicación sencilla para registrar y consultar consumos de combustible.
 
 ## Estructura
 
-- `index.php` (raíz): dashboard de resumen y últimos repostajes.
+- `index.php` (raíz): dashboard de resumen y últimos repostajes (sin gráficas).
 - `app/config.php`: conexión a BD (`getDb()`) y helper `e()` para escapar HTML.
 - `includes/navbar.php`: barra de navegación reutilizable.
 - `pages/formulario.php`: alta de repostajes (prepared statements).
-- `pages/listar.php`: historial de repostajes.
+- `pages/listar.php`: historial de repostajes y gráficas interactivas.
 - `css/main.css`: estilos globales.
 - `js/main.js`: scripts globales.
 - `img/`: recursos de imagen.
@@ -127,6 +127,7 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 - Registro de repostajes con fecha, kilómetros, litros, precio/litro.
 - Cálculo automático de importe y consumo (L/100km).
 - Listado histórico ordenado por fecha.
+- Gráficas en `pages/listar.php` con selector de rango (5/10/30) y opción de mostrar tendencia (media móvil SMA3).
 - UI con Bootstrap 5 y navegación simple.
 - Seguridad básica en `.htaccess` (bloqueo de dotfiles y carpeta `sql/`).
 
