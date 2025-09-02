@@ -130,6 +130,7 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 - Gráficas en `pages/listar.php` con selector de rango (5/10/30) y opción de mostrar tendencia (media móvil SMA3).
 - UI con Bootstrap 5 y navegación simple.
 - Seguridad básica en `.htaccess` (bloqueo de dotfiles y carpeta `sql/`).
+- Exportación a PDF del historial desde `pages/listar.php` con diseño de cabecera/pie y paginación automática.
 
 ## 2) Estructura del proyecto
 
@@ -144,6 +145,7 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 │  └─ navbar.php
 ├─ js/
 │  └─ main.js
+│  └─ export-pdf.js      # Lógica de exportación del historial a PDF (cliente)
 ├─ pages/
 │  ├─ formulario.php     # Alta de repostajes
 │  └─ listar.php         # Historial
@@ -201,6 +203,14 @@ Importante: no insertar `importe_total` en `INSERT`; la BD lo calcula.
 - Cálculo de consumo (L/100 km):
   - Si `km_recorridos > 0` y `litros > 0`, entonces `consumo_100km = (litros / km_recorridos) * 100`.
   - Si no hay registros previos o no puede calcularse, `km_recorridos` será 0 y `consumo_100km` quedará en 0 (las gráficas lo mostrarán como hueco si aplica).
+
+### Exportación a PDF del historial
+
+- Ubicación: `pages/listar.php`.
+- Botón: “Exportar PDF”.
+- Qué exporta: el bloque del historial `#historial-export` (cabecera con logo y fecha, tabla completa).
+- Implementación: html2canvas + jsPDF en cliente, con paginación automática a tamaño A4.
+- Requisitos: conexión a CDN o disponer de los recursos en caché del navegador.
 
 ## 6) Despliegue (paso a paso) en InfinityFree
 

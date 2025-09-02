@@ -69,11 +69,20 @@ if ($resGraficas) {
         <label class="form-check-label" for="toggleTendencia">Mostrar tendencia</label>
       </div>
     </form>
+    <button id="btnExportPDF" class="btn btn-outline-secondary btn-sm" type="button">Exportar PDF</button>
   </div>
   <?php if (isset($_GET['actualizado']) && $_GET['actualizado'] === '1'): ?>
     <div class="alert alert-success">Registro actualizado correctamente.</div>
   <?php endif; ?>
-  <table class="table table-striped table-bordered shadow">
+  <section id="historial-export" class="bg-white p-3 rounded border">
+    <div class="export-header d-flex align-items-center justify-content-between mb-3">
+      <div class="d-flex align-items-center gap-2">
+        <img src="../img/gasolina-180.png" alt="Logo" width="36" height="36" />
+        <strong>Historial de Repostajes</strong>
+      </div>
+      <div class="text-muted small">Generado: <?php echo date('Y-m-d H:i'); ?></div>
+    </div>
+  <table class="table table-striped table-bordered shadow mb-0">
     <thead class="table-dark">
       <tr>
         <th>Fecha</th>
@@ -103,6 +112,7 @@ if ($resGraficas) {
       <?php } } ?>
     </tbody>
   </table>
+  </section>
 
   <?php if (!empty($fechas)): ?>
   <h3 class="mt-5 mb-3">📈 Gráficas</h3>
@@ -148,6 +158,10 @@ if ($resGraficas) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Librería de gráficos -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Exportación a PDF (cliente) -->
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="../js/main.js"></script>
+<script src="../js/export-pdf.js"></script>
 </body>
 </html>
