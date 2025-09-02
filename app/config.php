@@ -6,6 +6,34 @@ if (file_exists(__DIR__ . '/env.php')) {
     require __DIR__ . '/env.php';
 }
 
+// Carga variables desde .env si existe (solo claves en formato KEY=VALUE)
+// Nota: .env no debe subirse al repositorio (mantener en .gitignore)
+$dotenvPath = dirname(__DIR__) . DIRECTORY_SEPARATOR . '.env';
+if (is_file($dotenvPath) && is_readable($dotenvPath)) {
+    $lines = file($dotenvPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if ($line === '' || $line[0] === '#') {
+            continue;
+        }
+        $pos = strpos($line, '=');
+        if ($pos === false) {
+            continue;
+        }
+        $key = trim(substr($line, 0, $pos));
+        $val = trim(substr($line, $pos + 1));
+        // Quita comillas envolventes si existen
+        if ((str_starts_with($val, '"') && str_ends_with($val, '"')) || (str_starts_with($val, "'") && str_ends_with($val, "'"))) {
+            $val = substr($val, 1, -1);
+        }
+        if ($key !== '') {
+            putenv($key . '=' . $val);
+            $_ENV[$key] = $val;
+            $_SERVER[$key] = $val;
+        }
+    }
+}
+
 /**
  * Retorna una conexión mysqli reutilizable usando variables de entorno.
  * Variables esperadas: DB_HOST, DB_USER, DB_PASS, DB_NAME
