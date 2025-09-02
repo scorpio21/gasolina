@@ -82,7 +82,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <meta name="apple-mobile-web-app-title" content="Gasolina">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
-<body class="bg-light">
+<body>
 <?php include __DIR__ . "/../includes/navbar.php"; ?>
 <div class="container py-4">
   <h2 class="mb-4">➕ Nuevo Repostaje</h2>

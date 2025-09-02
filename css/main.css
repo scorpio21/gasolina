@@ -36,6 +36,9 @@ body.tema-oscuro {
   color: #e5e5e5;
 }
 
+/* Si por cualquier motivo coexiste bg-light, forzamos el fondo oscuro */
+body.tema-oscuro.bg-light { background-color: #121212 !important; }
+
 /* Tarjetas y contenedores claros en modo normal: oscurecer en tema oscuro */
 body.tema-oscuro .bg-white,
 body.tema-oscuro .card,

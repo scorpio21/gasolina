@@ -57,7 +57,7 @@ if ($ultimos) {
   <meta name="apple-mobile-web-app-title" content="Gasolina">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
-<body class="bg-light">
+<body>
 <?php include __DIR__ . "/includes/navbar.php"; ?>
 
 <div class="container py-4">
