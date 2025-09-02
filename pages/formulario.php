@@ -10,12 +10,20 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $km = isset($_POST["km_actuales"]) ? (int)$_POST["km_actuales"] : 0;
     $litros = isset($_POST["litros"]) ? (float)$_POST["litros"] : 0.0;
     $precio = isset($_POST["precio_litro"]) ? (float)$_POST["precio_litro"] : 0.0;
+    $km_recorridos_input = isset($_POST["km_recorridos"]) && $_POST["km_recorridos"] !== '' ? (int)$_POST["km_recorridos"] : null;
     $importe = $litros * $precio; // La BD lo calcula en la columna generada, no lo insertamos
 
-    $res = $conexion->query("SELECT km_actuales FROM consumos ORDER BY id DESC LIMIT 1");
-    $ultimo = $res ? $res->fetch_assoc() : null;
-    $km_recorridos = ($ultimo) ? ($km - (int)$ultimo['km_actuales']) : 0;
-    $consumo = ($km_recorridos > 0) ? ($litros / $km_recorridos) * 100 : 0.0;
+    // Intentar calcular km_recorridos si no se proporcionó
+    $km_recorridos = 0;
+    if ($km_recorridos_input !== null && $km_recorridos_input >= 0) {
+        $km_recorridos = $km_recorridos_input;
+    } else {
+        $res = $conexion->query("SELECT km_actuales FROM consumos ORDER BY id DESC LIMIT 1");
+        $ultimo = $res ? $res->fetch_assoc() : null;
+        $km_recorridos = ($ultimo) ? max(0, $km - (int)$ultimo['km_actuales']) : 0;
+    }
+
+    $consumo = ($km_recorridos > 0 && $litros > 0) ? ($litros / $km_recorridos) * 100 : 0.0;
 
     // No insertamos en importe_total porque es una columna generada
     $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km) 
@@ -60,18 +68,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <div class="mb-3">
       <label class="form-label">Fecha</label>
       <input type="date" name="fecha" class="form-control" required>
+      <div class="form-text">Día del repostaje.</div>
     </div>
     <div class="mb-3">
       <label class="form-label">Km actuales</label>
       <input type="number" name="km_actuales" class="form-control" required>
+      <div class="form-text">Lectura del cuentakilómetros en el momento de repostar.</div>
     </div>
     <div class="mb-3">
       <label class="form-label">Litros</label>
       <input type="number" step="0.01" name="litros" class="form-control" required>
+      <div class="form-text">Litros cargados en este repostaje. Se usa para calcular el consumo.</div>
     </div>
     <div class="mb-3">
       <label class="form-label">Precio por litro (€)</label>
       <input type="number" step="0.001" name="precio_litro" class="form-control" required>
+      <div class="form-text">Precio pagado por litro. El importe total se calcula automáticamente.</div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Km recorridos (opcional)</label>
+      <input type="number" name="km_recorridos" class="form-control" placeholder="Si lo dejas vacío, se calcula por diferencia con el registro anterior">
+      <div class="form-text">Si lo dejas vacío, se calculará como diferencia con el último "Km actuales" guardado.</div>
     </div>
     <button type="submit" class="btn btn-primary">Guardar</button>
   </form>

@@ -189,6 +189,19 @@ Tabla `consumos`:
 
 Importante: no insertar `importe_total` en `INSERT`; la BD lo calcula.
 
+### Guía rápida del formulario y cálculo de consumo
+
+- Campos del formulario (`pages/formulario.php`):
+  - Fecha: día del repostaje.
+  - Km actuales: lectura del cuentakilómetros al repostar.
+  - Litros: litros cargados.
+  - Precio/L: precio por litro (el importe total se calcula solo como `litros * precio_litro`).
+  - Km recorridos (opcional): si lo dejas vacío, se calcula automáticamente como la diferencia con el último "Km actuales" guardado.
+
+- Cálculo de consumo (L/100 km):
+  - Si `km_recorridos > 0` y `litros > 0`, entonces `consumo_100km = (litros / km_recorridos) * 100`.
+  - Si no hay registros previos o no puede calcularse, `km_recorridos` será 0 y `consumo_100km` quedará en 0 (las gráficas lo mostrarán como hueco si aplica).
+
 ## 6) Despliegue (paso a paso) en InfinityFree
 
 1. Crea BD y credenciales en el panel; importa `sql/gasolinaBD.sql`.
