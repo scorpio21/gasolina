@@ -10,8 +10,24 @@ $rangoPermitido = [5, 10, 30];
 $r = isset($_GET['r']) ? (int)$_GET['r'] : 5;
 if (!in_array($r, $rangoPermitido, true)) { $r = 5; }
 
-// Datos de la tabla (historial completo)
-$resultado = $conexion->query("SELECT * FROM consumos ORDER BY fecha DESC");
+// Paginación y orden para la tabla
+$permitidosPorPagina = [10, 20];
+$pp = isset($_GET['pp']) ? (int)$_GET['pp'] : 10;
+if (!in_array($pp, $permitidosPorPagina, true)) { $pp = 10; }
+
+$p = isset($_GET['p']) ? max(1, (int)$_GET['p']) : 1;
+$offset = ($p - 1) * $pp;
+
+$dir = isset($_GET['dir']) ? strtolower((string)$_GET['dir']) : 'desc';
+if (!in_array($dir, ['asc', 'desc'], true)) { $dir = 'desc'; }
+
+// Total de filas para paginación
+$total = 0;
+$resTotal = $conexion->query("SELECT COUNT(*) AS c FROM consumos");
+if ($resTotal) { $rowC = $resTotal->fetch_assoc(); $total = (int)$rowC['c']; }
+
+// Datos de la tabla con LIMIT/OFFSET
+$resultado = $conexion->query("SELECT * FROM consumos ORDER BY fecha $dir LIMIT $pp OFFSET $offset");
 
 // Datos para las gráficas (últimos N)
 $resGraficas = $conexion->query(
@@ -71,6 +87,9 @@ if ($resGraficas) {
     </form>
     <button id="btnExportPDF" class="btn btn-outline-secondary btn-sm" type="button">Exportar PDF</button>
   </div>
+  <?php if (isset($_GET['creado']) && $_GET['creado'] === '1'): ?>
+    <div class="alert alert-success">Registro creado correctamente.</div>
+  <?php endif; ?>
   <?php if (isset($_GET['actualizado']) && $_GET['actualizado'] === '1'): ?>
     <div class="alert alert-success">Registro actualizado correctamente.</div>
   <?php endif; ?>
@@ -85,7 +104,16 @@ if ($resGraficas) {
   <table class="table table-striped table-bordered shadow mb-0">
     <thead class="table-dark">
       <tr>
-        <th>Fecha</th>
+        <?php
+          // Construir URL de toggle para fecha
+          $toggleDir = ($dir === 'asc') ? 'desc' : 'asc';
+          $qsBase = http_build_query(['pp'=>$pp,'p'=>1,'dir'=>$toggleDir,'r'=>$r]);
+        ?>
+        <th>
+          <a class="link-light text-decoration-none" href="?<?php echo $qsBase; ?>">
+            Fecha <?php echo $dir === 'asc' ? '↑' : '↓'; ?>
+          </a>
+        </th>
         <th>Km actuales</th>
         <th>Km recorridos</th>
         <th>Litros</th>
@@ -113,6 +141,42 @@ if ($resGraficas) {
     </tbody>
   </table>
   </section>
+
+  <?php
+    // Controles de paginación
+    $totalPaginas = ($pp > 0) ? (int)ceil($total / $pp) : 1;
+    $desde = $total > 0 ? ($offset + 1) : 0;
+    $hasta = min($offset + $pp, $total);
+    $buildQS = function($pagina) use ($pp, $dir, $r) {
+      return http_build_query(['p'=>$pagina,'pp'=>$pp,'dir'=>$dir,'r'=>$r]);
+    };
+  ?>
+  <div class="d-flex flex-wrap align-items-center justify-content-between mt-3">
+    <div class="text-muted small">Mostrando <?php echo $desde; ?>–<?php echo $hasta; ?> de <?php echo (int)$total; ?> registros</div>
+    <div class="d-flex align-items-center gap-2">
+      <label for="pp" class="form-label mb-0">Por página:</label>
+      <form method="get" class="d-flex align-items-center">
+        <input type="hidden" name="p" value="1">
+        <input type="hidden" name="dir" value="<?php echo e($dir); ?>">
+        <input type="hidden" name="r" value="<?php echo (int)$r; ?>">
+        <select id="pp" name="pp" class="form-select form-select-sm" onchange="this.form.submit()">
+          <option value="10" <?php echo $pp===10?'selected':''; ?>>10</option>
+          <option value="20" <?php echo $pp===20?'selected':''; ?>>20</option>
+        </select>
+      </form>
+      <nav>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item <?php echo $p<=1?'disabled':''; ?>">
+            <a class="page-link" href="?<?php echo $buildQS(max(1,$p-1)); ?>">Anterior</a>
+          </li>
+          <li class="page-item disabled"><span class="page-link"><?php echo $p; ?> / <?php echo $totalPaginas; ?></span></li>
+          <li class="page-item <?php echo $p>=$totalPaginas?'disabled':''; ?>">
+            <a class="page-link" href="?<?php echo $buildQS(min($totalPaginas,$p+1)); ?>">Siguiente</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
 
   <?php if (!empty($fechas)): ?>
   <h3 class="mt-5 mb-3">📈 Gráficas</h3>

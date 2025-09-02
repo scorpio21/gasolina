@@ -127,6 +127,7 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 - Registro de repostajes con fecha, kilómetros, litros, precio/litro.
 - Cálculo automático de importe y consumo (L/100km).
 - Listado histórico ordenado por fecha.
+- Historial con paginación (10/20 por página) y orden por fecha ASC/DESC.
 - Gráficas en `pages/listar.php` con selector de rango (5/10/30) y opción de mostrar tendencia (media móvil SMA3).
 - UI con Bootstrap 5 y navegación simple.
 - Seguridad básica en `.htaccess` (bloqueo de dotfiles y carpeta `sql/`).
@@ -211,6 +212,8 @@ Importante: no insertar `importe_total` en `INSERT`; la BD lo calcula.
 - Qué exporta: el bloque del historial `#historial-export` (cabecera con logo y fecha, tabla completa).
 - Implementación: html2canvas + jsPDF en cliente, con paginación automática a tamaño A4.
 - Requisitos: conexión a CDN o disponer de los recursos en caché del navegador.
+
+Nota: En el historial (`pages/listar.php`) puedes cambiar el orden de la columna Fecha haciendo clic en el encabezado y ajustar el tamaño de página en el selector “Por página”.
 
 ## 6) Despliegue (paso a paso) en InfinityFree
 
