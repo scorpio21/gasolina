@@ -1,0 +1,26 @@
+# Seguridad y configuración de la app
+# (No expongas credenciales en el repositorio)
+
+# Evitar listado de directorios
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  
+  # Bloquear acceso a archivos/paths que comienzan con punto (.git, .env, etc.)
+  RewriteRule "(^|/)\." - [F]
+
+  # Bloquear acceso directo a la carpeta sql/
+  RewriteRule ^sql/ - [F,L]
+
+  # Forzar HTTPS (si hay SSL activo en el hosting)
+  RewriteCond %{HTTPS} !=on
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Variables de entorno para conexión a BD (solo en producción)
+# Descomenta y rellena en el servidor (no subas secretos al repo)
+# SetEnv DB_HOST sqlXXX.epizy.com
+# SetEnv DB_USER epiz_12345678
+# SetEnv DB_PASS TU_PASSWORD_AQUI
+# SetEnv DB_NAME epiz_12345678_gasolina

@@ -45,3 +45,25 @@ Aplicación sencilla para registrar y consultar consumos de combustible.
 
 - Realiza commits frecuentes y claros.
 - No subir `.env`, archivos generados ni datos sensibles.
+
+## Despliegue en InfinityFree
+
+1. Crea la base de datos en el panel (host, usuario, contraseña, nombre BD).
+2. Importa `sql/gasolinaBD.sql` desde phpMyAdmin.
+3. Sube el proyecto a `htdocs/` y configura variables en `.htaccess`:
+
+    ```apache
+    # Variables de entorno para la BD (editar en el servidor)
+    SetEnv DB_HOST sqlXXX.epizy.com
+    SetEnv DB_USER epiz_12345678
+    SetEnv DB_PASS TU_PASSWORD_AQUI
+    SetEnv DB_NAME epiz_12345678_gasolina
+    ```
+
+4. Mantén activas las reglas de seguridad de `.htaccess`:
+    - Sin listado de directorios (`Options -Indexes`)
+    - Bloquear dotfiles (`RewriteRule "(^|/)\." - [F]`)
+    - Bloquear acceso a `sql/`
+    - Forzar HTTPS si tu dominio tiene SSL
+
+Nota: No subas credenciales al repositorio. `app/config.php` lee `DB_*` desde entorno con `getenv()`.
