@@ -22,9 +22,14 @@ if (is_file($dotenvPath) && is_readable($dotenvPath)) {
         }
         $key = trim(substr($line, 0, $pos));
         $val = trim(substr($line, $pos + 1));
-        // Quita comillas envolventes si existen
-        if ((str_starts_with($val, '"') && str_ends_with($val, '"')) || (str_starts_with($val, "'") && str_ends_with($val, "'"))) {
-            $val = substr($val, 1, -1);
+        // Quita comillas envolventes si existen (compatible con PHP 7.x)
+        $len = strlen($val);
+        if ($len >= 2) {
+            $first = $val[0];
+            $last  = $val[$len - 1];
+            if (($first === '"' && $last === '"') || ($first === '\'' && $last === '\'')) {
+                $val = substr($val, 1, -1);
+            }
         }
         if ($key !== '') {
             putenv($key . '=' . $val);
@@ -38,16 +43,30 @@ if (is_file($dotenvPath) && is_readable($dotenvPath)) {
  * Retorna una conexión mysqli reutilizable usando variables de entorno.
  * Variables esperadas: DB_HOST, DB_USER, DB_PASS, DB_NAME
  */
+function env(string $key, string $default = ''): string {
+    $val = getenv($key);
+    if ($val === false || $val === '') {
+        if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+            return (string) $_ENV[$key];
+        }
+        if (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+            return (string) $_SERVER[$key];
+        }
+        return $default;
+    }
+    return (string) $val;
+}
+
 function getDb(): mysqli {
     static $db = null;
     if ($db instanceof mysqli) {
         return $db;
     }
 
-    $host = getenv('DB_HOST') ?: 'localhost';
-    $user = getenv('DB_USER') ?: 'root';
-    $pass = getenv('DB_PASS') ?: '';
-    $name = getenv('DB_NAME') ?: 'gasolina';
+    $host = env('DB_HOST', 'localhost');
+    $user = env('DB_USER', 'root');
+    $pass = env('DB_PASS', '');
+    $name = env('DB_NAME', 'gasolina');
 
     $db = new mysqli($host, $user, $pass, $name);
     if ($db->connect_error) {

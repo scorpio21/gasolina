@@ -10,17 +10,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $km = isset($_POST["km_actuales"]) ? (int)$_POST["km_actuales"] : 0;
     $litros = isset($_POST["litros"]) ? (float)$_POST["litros"] : 0.0;
     $precio = isset($_POST["precio_litro"]) ? (float)$_POST["precio_litro"] : 0.0;
-    $importe = $litros * $precio;
+    $importe = $litros * $precio; // La BD lo calcula en la columna generada, no lo insertamos
 
     $res = $conexion->query("SELECT km_actuales FROM consumos ORDER BY id DESC LIMIT 1");
     $ultimo = $res ? $res->fetch_assoc() : null;
     $km_recorridos = ($ultimo) ? ($km - (int)$ultimo['km_actuales']) : 0;
     $consumo = ($km_recorridos > 0) ? ($litros / $km_recorridos) * 100 : 0.0;
 
-    $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, importe_total, km_recorridos, consumo_100km) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?)");
+    // No insertamos en importe_total porque es una columna generada
+    $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km) 
+                                VALUES (?, ?, ?, ?, ?, ?)");
     if ($stmt) {
-        $stmt->bind_param("sidddid", $fecha, $km, $litros, $precio, $importe, $km_recorridos, $consumo);
+        // Tipos: s (fecha), i (km_actuales), d (litros), d (precio_litro), i (km_recorridos), d (consumo_100km)
+        $stmt->bind_param("siddid", $fecha, $km, $litros, $precio, $km_recorridos, $consumo);
         $stmt->execute();
         $stmt->close();
     }
