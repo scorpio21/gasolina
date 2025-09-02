@@ -1,0 +1,14 @@
+# Normaliza finales de línea: almacena LF en el repositorio y adapta al SO en el working copy
+* text=auto
+
+# Opcional: scripts de Windows con CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Archivos de código y texto comunes en LF
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.md text eol=lf
+*.sql text eol=lf
