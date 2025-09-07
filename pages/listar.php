@@ -4,6 +4,8 @@ require_once __DIR__ . '/../app/config.php';
 
 $conexion = getDb();
 $BASE_URL = '..';
+$vehiculoId = getActiveVehiculoId();
+$useVeh = hasColumn('consumos','vehiculo_id') && $vehiculoId !== null;
 
 // Selector de rango para gráficas (5/10/30)
 $rangoPermitido = [5, 10, 30];
@@ -23,16 +25,16 @@ if (!in_array($dir, ['asc', 'desc'], true)) { $dir = 'desc'; }
 
 // Total de filas para paginación
 $total = 0;
-$resTotal = $conexion->query("SELECT COUNT(*) AS c FROM consumos");
+$resTotal = $conexion->query("SELECT COUNT(*) AS c FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : ""));
 if ($resTotal) { $rowC = $resTotal->fetch_assoc(); $total = (int)$rowC['c']; }
 
 // Datos de la tabla con LIMIT/OFFSET
-$resultado = $conexion->query("SELECT * FROM consumos ORDER BY fecha $dir LIMIT $pp OFFSET $offset");
+$resultado = $conexion->query("SELECT * FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : "") . " ORDER BY fecha $dir LIMIT $pp OFFSET $offset");
 
 // Datos para las gráficas (últimos N)
 $resGraficas = $conexion->query(
   "SELECT fecha, litros, precio_litro, importe_total, consumo_100km 
-   FROM consumos ORDER BY fecha DESC LIMIT $r"
+   FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : "") . " ORDER BY fecha DESC LIMIT $r"
 );
 $fechas = $importes = $litros = $precios = $consumos = [];
 if ($resGraficas) {
@@ -126,7 +128,12 @@ if ($resGraficas) {
     <tbody>
       <?php if ($resultado) { while ($row = $resultado->fetch_assoc()) { ?>
       <tr>
-        <td><?php echo e($row['fecha']); ?></td>
+        <td>
+          <?php echo e($row['fecha']); ?>
+          <?php if (hasColumn('consumos','lleno') && isset($row['lleno']) && (int)$row['lleno'] === 1): ?>
+            <span class="badge bg-success ms-1">Lleno</span>
+          <?php endif; ?>
+        </td>
         <td><?php echo e((string)$row['km_actuales']); ?></td>
         <td><?php echo e((string)$row['km_recorridos']); ?></td>
         <td><?php echo e((string)$row['litros']); ?></td>

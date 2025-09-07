@@ -4,13 +4,27 @@ require_once __DIR__ . '/app/config.php';
 $BASE_URL = '.';
 
 $conn = getDb();
+$vehiculoId = getActiveVehiculoId();
+$useVeh = hasColumn('consumos','vehiculo_id') && $vehiculoId !== null;
+
+// Info del vehículo activo (nombre y foto)
+$vehiculos = function_exists('getVehiculos') ? getVehiculos() : [];
+$vehiculoNombre = 'Vehículo';
+$vehiculoFoto = '';
+foreach ($vehiculos as $v) {
+    if ((int)$v['id'] === (int)($vehiculoId ?? 0)) {
+        $vehiculoNombre = ($v['marca'] ?? '') . ' ' . ($v['modelo'] ?? '');
+        $vehiculoFoto = isset($v['foto_url']) ? (string)$v['foto_url'] : '';
+        break;
+    }
+}
 
 // Totales
 $sql = "SELECT 
             SUM(importe_total) as gasto_total,
             MAX(km_actuales) - MIN(km_actuales) as km_totales,
             (SUM(litros) / NULLIF(MAX(km_actuales) - MIN(km_actuales),0)) * 100 as consumo_medio
-        FROM consumos";
+        FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : "");
 $res = $conn->query($sql);
 $totales = $res ? $res->fetch_assoc() : [
     'gasto_total' => 0,
@@ -25,7 +39,7 @@ if (!in_array($r, $rangoPermitido, true)) { $r = 5; }
 
 // Últimos N repostajes
 $sql2 = "SELECT fecha, km_actuales, litros, precio_litro, importe_total, consumo_100km 
-         FROM consumos ORDER BY fecha DESC LIMIT $r";
+         FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : "") . " ORDER BY fecha DESC LIMIT $r";
 $ultimos = $conn->query($sql2);
 // Convertir resultado en array para la tabla
 $ultimosArr = [];
@@ -61,6 +75,24 @@ if ($ultimos) {
 <?php include __DIR__ . "/includes/navbar.php"; ?>
 
 <div class="container py-4">
+  <?php
+    // Resolver src de la imagen (absoluta o relativa)
+    $vehiculoImgSrc = './img/audi.png';
+    if ($vehiculoFoto !== '') {
+      if (stripos($vehiculoFoto, 'http://') === 0 || stripos($vehiculoFoto, 'https://') === 0) {
+        $vehiculoImgSrc = $vehiculoFoto;
+      } else {
+        $vehiculoFoto = ltrim($vehiculoFoto, '/');
+        $vehiculoImgSrc = './' . $vehiculoFoto;
+      }
+    }
+  ?>
+  <?php if (!empty($vehiculos)): ?>
+  <div class="vehiculo-hero text-center mb-3">
+    <img src="<?php echo e($vehiculoImgSrc); ?>" alt="<?php echo e($vehiculoNombre); ?>" class="vehiculo-foto" />
+    <div class="vehiculo-nombre mt-2 fw-semibold"><?php echo e(trim($vehiculoNombre) !== '' ? $vehiculoNombre : 'Vehículo'); ?></div>
+  </div>
+  <?php endif; ?>
   <h1 class="mb-4 text-center">📊 Resumen de Consumo</h1>
 
   <div class="row g-4 mb-4">

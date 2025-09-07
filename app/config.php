@@ -1,6 +1,11 @@
 <?php
 declare(strict_types=1);
 
+// Sesión para preferencias (p.ej., vehiculo activo)
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
 // Carga variables locales si existe app/env.php (no se versiona)
 if (file_exists(__DIR__ . '/env.php')) {
     require __DIR__ . '/env.php';
@@ -81,4 +86,61 @@ function getDb(): mysqli {
  */
 function e(string $texto): string {
     return htmlspecialchars($texto, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+/**
+ * Comprueba si existe una tabla en la BD actual.
+ */
+function hasTable(string $table): bool {
+    $db = getDb();
+    $dbname = $db->real_escape_string(env('DB_NAME', 'gasolina'));
+    $tableEsc = $db->real_escape_string($table);
+    $sql = "SELECT 1 FROM information_schema.TABLES WHERE TABLE_SCHEMA='{$dbname}' AND TABLE_NAME='{$tableEsc}' LIMIT 1";
+    $res = $db->query($sql);
+    return $res ? (bool)$res->num_rows : false;
+}
+
+/**
+ * Comprueba si una columna existe en una tabla.
+ */
+function hasColumn(string $table, string $column): bool {
+    $db = getDb();
+    $dbname = $db->real_escape_string(env('DB_NAME', 'gasolina'));
+    $tableEsc = $db->real_escape_string($table);
+    $colEsc = $db->real_escape_string($column);
+    $sql = "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='{$dbname}' AND TABLE_NAME='{$tableEsc}' AND COLUMN_NAME='{$colEsc}' LIMIT 1";
+    $res = $db->query($sql);
+    return $res ? (bool)$res->num_rows : false;
+}
+
+/**
+ * Gestión de vehículo activo en sesión.
+ */
+function getActiveVehiculoId(): ?int {
+    if (isset($_SESSION['vehiculo_id']) && is_numeric($_SESSION['vehiculo_id'])) {
+        return (int) $_SESSION['vehiculo_id'];
+    }
+    return null;
+}
+
+function setActiveVehiculoId(?int $id): void {
+    if ($id === null) {
+        unset($_SESSION['vehiculo_id']);
+    } else {
+        $_SESSION['vehiculo_id'] = $id;
+    }
+}
+
+/**
+ * Obtiene lista de vehículos si existe la tabla. Devuelve array vacía si no.
+ */
+function getVehiculos(): array {
+    if (!hasTable('vehiculos')) return [];
+    $db = getDb();
+    $res = $db->query("SELECT id, marca, modelo, anio, combustible, activo, COALESCE(foto_url,'') AS foto_url FROM vehiculos ORDER BY activo DESC, marca, modelo");
+    $out = [];
+    if ($res) {
+        while ($r = $res->fetch_assoc()) { $out[] = $r; }
+    }
+    return $out;
 }

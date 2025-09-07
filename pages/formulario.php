@@ -4,13 +4,17 @@ require_once __DIR__ . '/../app/config.php';
 
 $conexion = getDb();
 $BASE_URL = '..';
+$vehiculoId = getActiveVehiculoId();
+$useVeh = hasColumn('consumos','vehiculo_id') && $vehiculoId !== null;
+$useLleno = hasColumn('consumos','lleno');
 $errores = [];
 $old = [
     'fecha' => '',
     'km_actuales' => '',
     'litros' => '',
     'precio_litro' => '',
-    'km_recorridos' => ''
+    'km_recorridos' => '',
+    'lleno' => '1'
 ];
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
@@ -33,6 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if (!is_numeric($old['litros']) || $litros <= 0) { $errores['litros'] = 'Introduce litros válidos (> 0).'; }
     if (!is_numeric($old['precio_litro']) || $precio <= 0) { $errores['precio_litro'] = 'Introduce un precio por litro válido (> 0).'; }
     if ($km_recorridos_input !== null && $km_recorridos_input < 0) { $errores['km_recorridos'] = 'Los km recorridos no pueden ser negativos.'; }
+    $llenoVal = isset($_POST['lleno']) ? 1 : 0;
 
     // Solo intentamos calcular km_recorridos si no hay errores de entrada
     if (empty($errores)) {
@@ -40,7 +45,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($km_recorridos_input !== null) {
             $km_recorridos = $km_recorridos_input;
         } else {
-            $res = $conexion->query("SELECT km_actuales FROM consumos ORDER BY id DESC LIMIT 1");
+            $whereVeh = $useVeh ? (" WHERE vehiculo_id=".(int)$vehiculoId) : "";
+            $res = $conexion->query("SELECT km_actuales FROM consumos".$whereVeh." ORDER BY id DESC LIMIT 1");
             $ultimo = $res ? $res->fetch_assoc() : null;
             $km_recorridos = ($ultimo) ? max(0, $km - (int)$ultimo['km_actuales']) : 0;
         }
@@ -48,12 +54,63 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $consumo = ($km_recorridos > 0 && $litros > 0) ? ($litros / $km_recorridos) * 100 : 0.0;
 
         // Inserción segura (importe_total es columna generada)
-        $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km) 
-                                    VALUES (?, ?, ?, ?, ?, ?)");
+        if ($useVeh && $useLleno) {
+            $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km, vehiculo_id, lleno)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        } elseif ($useVeh && !$useLleno) {
+            $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km, vehiculo_id)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?)");
+        } elseif (!$useVeh && $useLleno) {
+            $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km, lleno)
+                                        VALUES (?, ?, ?, ?, ?, ?, ?)");
+        } else {
+            $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km)
+                                        VALUES (?, ?, ?, ?, ?, ?)");
+        }
         if ($stmt) {
-            $stmt->bind_param("siddid", $fecha, $km, $litros, $precio, $km_recorridos, $consumo);
+            if ($useVeh && $useLleno) {
+                $stmt->bind_param("siddidii", $fecha, $km, $litros, $precio, $km_recorridos, $consumo, $vehiculoId, $llenoVal);
+            } elseif ($useVeh && !$useLleno) {
+                $stmt->bind_param("siddidi", $fecha, $km, $litros, $precio, $km_recorridos, $consumo, $vehiculoId);
+            } elseif (!$useVeh && $useLleno) {
+                $stmt->bind_param("siddidi", $fecha, $km, $litros, $precio, $km_recorridos, $consumo, $llenoVal);
+            } else {
+                $stmt->bind_param("siddid", $fecha, $km, $litros, $precio, $km_recorridos, $consumo);
+            }
             $stmt->execute();
             $stmt->close();
+
+            // Si guardamos 'lleno', recalculamos consumo real "lleno a lleno" para este registro
+            if ($useLleno && $llenoVal === 1) {
+                $nuevoId = $conexion->insert_id;
+                if ($nuevoId > 0) {
+                    // Buscar el último 'lleno' anterior (mismo vehículo si aplica)
+                    $condVeh = $useVeh ? (" AND vehiculo_id=".(int)$vehiculoId) : "";
+                    $prev = $conexion->query(
+                        "SELECT id, km_actuales FROM consumos WHERE lleno=1 AND id<".(int)$nuevoId.$condVeh." ORDER BY id DESC LIMIT 1"
+                    );
+                    if ($prev && $prev->num_rows === 1) {
+                        $p = $prev->fetch_assoc();
+                        $prevId = (int)$p['id'];
+                        $prevKm = (int)$p['km_actuales'];
+                        $kmDelta = max(0, $km - $prevKm);
+                        if ($kmDelta > 0) {
+                            // Sumar litros entre prevId (excluido) y nuevoId (incluido)
+                            $sumQ = $conexion->query(
+                                "SELECT SUM(litros) AS litros_total FROM consumos WHERE id>".(int)$prevId." AND id<=".(int)$nuevoId.$condVeh
+                            );
+                            $s = $sumQ ? $sumQ->fetch_assoc() : null;
+                            $litrosTotal = $s ? (float)$s['litros_total'] : 0.0;
+                            if ($litrosTotal > 0) {
+                                $consumoReal = ($litrosTotal / $kmDelta) * 100.0;
+                                // Actualizar consumo_100km del registro actual con el valor real lleno a lleno
+                                $upd = $conexion->prepare("UPDATE consumos SET consumo_100km=? WHERE id=?");
+                                if ($upd) { $upd->bind_param("di", $consumoReal, $nuevoId); $upd->execute(); $upd->close(); }
+                            }
+                        }
+                    }
+                }
+            }
         }
         header("Location: " . $BASE_URL . "/pages/listar.php?creado=1");
         exit;
@@ -126,6 +183,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       <input type="number" name="km_recorridos" min="0" step="1" class="form-control <?php echo isset($errores['km_recorridos']) ? 'is-invalid' : ''; ?>" placeholder="Si lo dejas vacío, se calcula por diferencia con el registro anterior" value="<?php echo e($old['km_recorridos']); ?>">
       <?php if (isset($errores['km_recorridos'])): ?><div class="invalid-feedback"><?php echo e($errores['km_recorridos']); ?></div><?php endif; ?>
       <div class="form-text">Si lo dejas vacío, se calculará como diferencia con el último "Km actuales" guardado.</div>
+    </div>
+    <div class="mb-3 form-check">
+      <input class="form-check-input" type="checkbox" id="lleno" name="lleno" <?php echo ($old['lleno'] === '1') ? 'checked' : ''; ?>>
+      <label class="form-check-label" for="lleno">Depósito lleno</label>
+      <div class="form-text">Marca esta opción cuando hayas llenado el depósito. Permite calcular el consumo real "lleno a lleno".</div>
     </div>
     <button type="submit" class="btn btn-primary">Guardar</button>
   </form>
