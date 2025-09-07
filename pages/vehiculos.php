@@ -236,8 +236,8 @@ if ($editId !== null) {
             <?php endif; ?>
             <?php if ($cols['vin']): ?>
             <div class="col-md-6">
-              <label class="form-label">VIN</label>
-              <input type="text" name="vin" class="form-control" value="<?php echo e($editRow['vin'] ?? ''); ?>">
+              <label class="form-label">Número de bastidor (VIN)</label>
+              <input type="text" name="vin" class="form-control" placeholder="17 caracteres" value="<?php echo e($editRow['vin'] ?? ''); ?>">
             </div>
             <?php endif; ?>
             <?php if ($cols['capacidad_deposito_l']): ?>
