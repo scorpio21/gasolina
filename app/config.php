@@ -6,6 +6,15 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+// Si llega parámetro ?vehiculo=ID en la URL, actualizar la sesión cuanto antes
+if (isset($_GET['vehiculo'])) {
+    $vid = is_numeric($_GET['vehiculo']) ? (int)$_GET['vehiculo'] : null;
+    if ($vid !== null) {
+        // setActiveVehiculoId aún no está definido; lo haremos más abajo si no existe variable temporal
+        $_SESSION['vehiculo_id'] = $vid;
+    }
+}
+
 // Carga variables locales si existe app/env.php (no se versiona)
 if (file_exists(__DIR__ . '/env.php')) {
     require __DIR__ . '/env.php';
