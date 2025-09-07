@@ -31,6 +31,24 @@ $totales = $res ? $res->fetch_assoc() : [
     'km_totales' => 0,
     'consumo_medio' => 0,
 ];
+$eurKm = ((float)($totales['km_totales'] ?? 0) > 0) ? ((float)$totales['gasto_total'] / (float)$totales['km_totales']) : 0.0;
+
+// Por mes: gasto mensual (para KPIs y gráfica)
+$labelsMensual = [];
+$totalesMensual = [];
+$avgMes = 0.0;
+$sqlMes = "SELECT DATE_FORMAT(fecha,'%Y-%m') AS ym, SUM(importe_total) AS total FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : "") . " GROUP BY ym ORDER BY ym ASC";
+$rMes = $conn->query($sqlMes);
+if ($rMes) {
+  $sum = 0.0; $n = 0;
+  while ($row = $rMes->fetch_assoc()) {
+    $labelsMensual[] = (string)$row['ym'];
+    $totalesMensual[] = (float)$row['total'];
+    $sum += (float)$row['total'];
+    $n++;
+  }
+  if ($n > 0) { $avgMes = $sum / $n; }
+}
 
 // Selección de rango para dashboard (5/10/30)
 $rangoPermitido = [5, 10, 30];
@@ -232,6 +250,27 @@ if ($ultimos) {
           <p class="fs-4 fw-bold">
             <?php echo e(number_format((float)($totales['consumo_medio'] ?? 0), 2)); ?> L/100km
           </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-md-6">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">€/km</h5>
+          <p class="fs-4 fw-bold"><?php echo e(number_format($eurKm, 3)); ?> €/km</p>
+          <div class="text-muted small">Calculado como Gasto total / Km totales</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card text-center shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">€/mes (promedio)</h5>
+          <p class="fs-4 fw-bold"><?php echo e(number_format($avgMes, 2)); ?> €/mes</p>
+          <div class="text-muted small">Promedio mensual según historial</div>
         </div>
       </div>
     </div>

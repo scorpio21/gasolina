@@ -94,3 +94,12 @@ body.tema-oscuro .vehiculo-hero .vehiculo-foto {
 @media (max-width: 576px) {
   .vehiculo-hero img { max-width: 100px !important; }
 }
+
+/* ============================= */
+/* Grafico mensual (Listar)      */
+/* ============================= */
+#graficoMensual {
+  display: block;
+  width: 100% !important;
+  min-height: 260px;
+}

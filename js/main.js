@@ -401,4 +401,75 @@
       console.error('Error inicializando gráficas', e);
     }
   }
+  // =============================
+  // Gráfico mensual (Listar)
+  // =============================
+  try {
+    const mensualEl = document.getElementById('mensual-data');
+    const grafMensual = document.getElementById('graficoMensual');
+    if (window.Chart && mensualEl && grafMensual && grafMensual.getContext) {
+      const labels = JSON.parse(mensualEl.getAttribute('data-labels') || '[]');
+      const totales = JSON.parse(mensualEl.getAttribute('data-totales') || '[]');
+      try { console.log('[Mensual] labels:', labels, 'totales:', totales); } catch(_) {}
+      // Asegurar una altura visible incluso si el contenedor no la asigna aún
+      if (!grafMensual.style.height) { grafMensual.style.height = '260px'; }
+      if (!grafMensual.height || grafMensual.height === 0) { grafMensual.height = 260; }
+      // Forzar fondo para detectar el canvas
+      try { grafMensual.style.background = 'transparent'; } catch(_) {}
+      const ensureWidthAndCreate = () => {
+        try {
+          const parent = grafMensual.parentElement;
+          const pw = parent ? parent.clientWidth : 0;
+          if (!grafMensual.style.width) { grafMensual.style.width = '100%'; }
+          if ((!grafMensual.width || grafMensual.width === 0) && pw > 0) { grafMensual.width = pw; }
+          if ((!grafMensual.width || grafMensual.width === 0)) { grafMensual.width = 600; }
+        } catch(_) {}
+        const ctx = grafMensual.getContext('2d');
+        // Registrar plugin de datalabels si existe
+        if (window.ChartDataLabels && Chart && Chart.register) {
+          try { Chart.register(window.ChartDataLabels); } catch(_) {}
+        }
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Gasto mensual (€)',
+              data: totales,
+              backgroundColor: 'rgba(13,110,253,0.25)',
+              borderColor: '#0d6efd',
+              borderWidth: 1,
+              barPercentage: 0.6,
+              categoryPercentage: 0.7
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              datalabels: {
+                anchor: 'end',
+                align: 'end',
+                color: '#444',
+                formatter: (v) => `${v.toFixed(2)} €`,
+                font: { weight: '600' }
+              }
+            },
+            scales: {
+              x: { grid: { display: true } },
+              y: { beginAtZero: true, grid: { display: true } }
+            }
+          }
+        });
+        try { console.log('[Mensual] chart creado:', !!Chart.getChart(grafMensual)); } catch(_) {}
+      };
+      // Si el ancho aún es 0, esperemos un frame
+      if ((grafMensual.parentElement && grafMensual.parentElement.clientWidth === 0) || grafMensual.clientWidth === 0) {
+        requestAnimationFrame(ensureWidthAndCreate);
+      } else {
+        ensureWidthAndCreate();
+      }
+    }
+  } catch (e) { /* noop */ }
 })();

@@ -29,18 +29,26 @@ Aplicación sencilla para registrar y consultar consumos de combustible.
      }
      ```
 
+## Gráficas y KPIs en Historial (Listar)
 
-   - Opción B: copia `.env.example` a `.env` y ajusta las variables:
+- KPIs en la parte superior de `pages/listar.php`:
+  - **€/km**: Gasto total / Km totales (por vehículo activo).
+  - **€/mes (promedio)**: media del gasto agrupado por mes (últimos 12 meses).
+- **Gasto mensual (barras)**: gráfico de barras con el gasto total por mes en los últimos 12 meses.
+  - Requiere `Chart.js 3.9.1` y `chartjs-plugin-datalabels` para mostrar etiquetas “€” sobre cada barra.
+  - Si no hay datos, el gráfico puede aparecer vacío; añade registros o amplía el rango.
 
-    ```env
-    DB_HOST=localhost
-    DB_USER=root
-    DB_PASS=
-    DB_NAME=gasolina
-    ```
+- Opción B: copia `.env.example` a `.env` y ajusta las variables:
 
-2. Importa `sql/gasolinaBD.sql` en tu base de datos.
-3. Coloca el proyecto en tu servidor (por ejemplo `d:/xampp/htdocs/Gasolina`).
+```env
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=
+DB_NAME=gasolina
+```
+
+1. Importa `sql/gasolinaBD.sql` en tu base de datos.
+2. Coloca el proyecto en tu servidor (por ejemplo `d:/xampp/htdocs/Gasolina`).
 
 ## Estructura
 
@@ -295,7 +303,9 @@ CREATE TABLE IF NOT EXISTS mantenimientos (
   CONSTRAINT fk_mantenimientos_vehiculo FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
     ON UPDATE CASCADE ON DELETE CASCADE
 );
+
 ```
+
 ### Migración SQL (multi‑vehículo + foto)
 
 Ejecuta en tu BD (ajusta si tu motor no soporta IF NOT EXISTS):

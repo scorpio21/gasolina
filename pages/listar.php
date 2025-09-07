@@ -46,6 +46,23 @@ if ($resGraficas) {
     $consumos[] = isset($row['consumo_100km']) && $row['consumo_100km'] !== null ? (float)$row['consumo_100km'] : null;
   }
 }
+
+// Datos mensuales (para gráfico mensual de gasto)
+$labelsMensual = [];
+$totalesMensual = [];
+$whereMes = [];
+if ($useVeh) { $whereMes[] = "vehiculo_id=".(int)$vehiculoId; }
+$whereMes[] = "fecha >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)";
+$sqlMes = "SELECT DATE_FORMAT(fecha,'%Y-%m') AS ym, SUM(importe_total) AS total FROM consumos"
+  . (empty($whereMes) ? "" : (" WHERE ".implode(' AND ', $whereMes)))
+  . " GROUP BY ym ORDER BY ym ASC";
+$resMes = $conexion->query($sqlMes);
+if ($resMes) {
+  while ($row = $resMes->fetch_assoc()) {
+    $labelsMensual[] = (string)$row['ym'];
+    $totalesMensual[] = (float)$row['total'];
+  }
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -61,7 +78,7 @@ if ($resGraficas) {
   <link rel="apple-touch-icon" sizes="152x152" href="/img/gasolina-152.png">
   <link rel="apple-touch-icon" sizes="120x120" href="/img/gasolina-120.png">
   <!-- PWA manifest (opcional) -->
-  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="manifest" href="../manifest.webmanifest">
   <!-- Ajustes iOS para web app -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <!-- Ajustes Android/Chrome PWA -->
@@ -73,6 +90,27 @@ if ($resGraficas) {
 <?php include __DIR__ . "/../includes/navbar.php"; ?>
 <div class="container py-4">
   <h2 class="mb-4">📊 Historial de Repostajes</h2>
+  <?php
+    // KPIs básicos para el histórico (€/km y €/mes promedio)
+    $eurKm = 0.0; $avgMes = 0.0;
+    $resTot = $conexion->query("SELECT SUM(importe_total) AS gasto_total, MAX(km_actuales)-MIN(km_actuales) AS km_totales FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : ""));
+    if ($resTot) { $t = $resTot->fetch_assoc(); if (($t['km_totales'] ?? 0) > 0) { $eurKm = (float)$t['gasto_total'] / (float)$t['km_totales']; } }
+    if (!empty($totalesMensual)) { $avgMes = array_sum($totalesMensual) / max(1,count($totalesMensual)); }
+  ?>
+  <div class="row g-4 mb-3">
+    <div class="col-md-6">
+      <div class="card text-center shadow-sm"><div class="card-body">
+        <h6 class="card-title mb-1">€/km</h6>
+        <div class="fs-5 fw-semibold"><?php echo e(number_format($eurKm, 3)); ?> €/km</div>
+      </div></div>
+    </div>
+    <div class="col-md-6">
+      <div class="card text-center shadow-sm"><div class="card-body">
+        <h6 class="card-title mb-1">€/mes (promedio)</h6>
+        <div class="fs-5 fw-semibold"><?php echo e(number_format($avgMes, 2)); ?> €/mes</div>
+      </div></div>
+    </div>
+  </div>
   <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2">
     <h5 class="mb-0">Gráficas de los últimos <?php echo (int)$r; ?> registros</h5>
     <form method="get" class="d-flex align-items-center gap-2">
@@ -148,6 +186,16 @@ if ($resGraficas) {
     </tbody>
   </table>
   </section>
+
+  <?php if (!empty($labelsMensual)): ?>
+  <h3 class="mt-4 mb-3">📅 Gasto mensual</h3>
+  <div class="card p-3 shadow-sm mb-4">
+    <div class="chart-container" style="height:260px;">
+      <canvas id="graficoMensual"></canvas>
+    </div>
+    <div id="mensual-data" data-labels='<?php echo htmlspecialchars(json_encode($labelsMensual), ENT_QUOTES, 'UTF-8'); ?>' data-totales='<?php echo htmlspecialchars(json_encode($totalesMensual), ENT_QUOTES, 'UTF-8'); ?>' hidden></div>
+  </div>
+  <?php endif; ?>
 
   <?php
     // Controles de paginación
@@ -229,6 +277,8 @@ if ($resGraficas) {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <!-- Librería de gráficos -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<!-- Plugin para mostrar etiquetas en barras/puntos -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
 <!-- Exportación a PDF (cliente) -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
