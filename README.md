@@ -130,6 +130,9 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 - Historial con paginación (10/20 por página) y orden por fecha ASC/DESC.
 - Gráficas en `pages/listar.php` con selector de rango (5/10/30) y opción de mostrar tendencia (media móvil SMA3). Optimizadas para iOS Safari con Chart.js 3.9.1 y creación condicional vía `requestAnimationFrame` solo en iOS.
 - Modo oscuro con alternancia desde la barra de navegación; preferencia persistida en `localStorage`.
+- Multi‑vehículo con selector en la barra (filtra dashboard, historial y formulario).
+- Foto por vehículo (navbar + tarjeta en dashboard) vía campo `vehiculos.foto_url`.
+- "Depósito lleno" y cálculo real "lleno a lleno" (badge en historial y cálculo automático al guardar el segundo lleno).
 - UI con Bootstrap 5 y navegación simple.
 - Seguridad básica en `.htaccess` (bloqueo de dotfiles y carpeta `sql/`).
 - Exportación a PDF del historial desde `pages/listar.php` con diseño de cabecera/pie y paginación automática.
@@ -240,6 +243,68 @@ Nota: En el historial (`pages/listar.php`) puedes cambiar el orden de la columna
 - Persistencia: la preferencia se guarda en `localStorage` con la clave `tema` (`oscuro`/`claro`).
 - Alcance: se aplica la clase `tema-oscuro` al `<body>`, con estilos en `css/main.css`.
 - Gráficas: los colores de texto y rejilla de Chart.js se ajustan automáticamente al cambiar de tema, sin recargar la página.
+
+## Multi‑vehículo y foto del vehículo
+
+- Selector: en `includes/navbar.php` aparece un menú "🚘 Vehículo" si existe la tabla `vehiculos`. La selección se guarda en sesión.
+- Filtro: `index.php`, `pages/listar.php` y `pages/formulario.php` filtran/guardan por el vehículo activo si existe `consumos.vehiculo_id`.
+- Foto: establece `vehiculos.foto_url` con una ruta relativa (p. ej., `img/audi.png`) o una URL absoluta. Se muestra en navbar y como tarjeta en `index.php`.
+
+### Migración SQL (multi‑vehículo + foto)
+
+Ejecuta en tu BD (ajusta si tu motor no soporta IF NOT EXISTS):
+
+```sql
+CREATE TABLE IF NOT EXISTS vehiculos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  marca VARCHAR(50) NOT NULL,
+  modelo VARCHAR(80) NOT NULL,
+  anio INT NULL,
+  combustible VARCHAR(20) NULL,
+  matricula VARCHAR(20) NULL,
+  vin VARCHAR(32) NULL,
+  foto_url VARCHAR(255) NULL,
+  activo TINYINT(1) NOT NULL DEFAULT 1
+);
+
+ALTER TABLE consumos ADD COLUMN IF NOT EXISTS vehiculo_id INT NULL;
+ALTER TABLE consumos
+  ADD CONSTRAINT fk_consumos_vehiculo
+  FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
+  ON UPDATE CASCADE
+  ON DELETE SET NULL;
+
+-- Si tu versión no acepta IF NOT EXISTS, usa ADD COLUMN simple:
+-- ALTER TABLE vehiculos ADD COLUMN foto_url VARCHAR(255) NULL;
+```
+
+Asocia tus registros existentes a un vehículo (ejemplo Audi Q3):
+
+```sql
+INSERT INTO vehiculos (marca, modelo, anio, combustible, matricula, vin, foto_url, activo)
+VALUES ('Audi', 'Q3 1.4 TFSI S tronic Design', 2018, 'Gasolina 95/98', NULL, NULL, 'img/audi.png', 1);
+
+UPDATE consumos SET vehiculo_id = (SELECT id FROM vehiculos WHERE marca='Audi' AND modelo LIKE 'Q3%' ORDER BY id DESC LIMIT 1)
+WHERE vehiculo_id IS NULL;
+```
+
+## "Depósito lleno" y cálculo "lleno a lleno"
+
+- Formulario: `pages/formulario.php` incluye un checkbox "Depósito lleno" (por defecto activado). Si haces un llenado parcial, desmárcalo.
+- Historial: `pages/listar.php` muestra una insignia "Lleno" junto a la fecha para los registros con `lleno=1`.
+- Cálculo real: cuando guardas un registro marcado como "lleno", la app busca el anterior "lleno" del mismo vehículo y calcula el consumo real del tramo entre ambos:
+  - `consumo_100km(real) = (suma de litros entre llenos) / (kmDelta entre llenos) × 100`
+  - El valor se guarda en `consumo_100km` del segundo lleno (registro actual), sustituyendo el estimado.
+
+### Migración SQL (campo "lleno")
+
+```sql
+-- Si no existe la columna 'lleno' en consumos, añádela:
+ALTER TABLE consumos ADD COLUMN lleno TINYINT(1) NOT NULL DEFAULT 1;
+
+-- Marca tu punto de partida como lleno (ejemplo de fecha):
+UPDATE consumos SET lleno = 1 WHERE fecha = '2025-09-02';
+```
 
 ## 8) Preguntas frecuentes (FAQ)
 
