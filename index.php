@@ -64,7 +64,7 @@ if ($ultimos) {
   <link rel="apple-touch-icon" sizes="152x152" href="/img/gasolina-152.png">
   <link rel="apple-touch-icon" sizes="120x120" href="/img/gasolina-120.png">
   <!-- PWA manifest (opcional) -->
-  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="manifest" href="./manifest.webmanifest">
   <!-- Ajustes iOS para web app -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <!-- Ajustes Android/Chrome PWA -->

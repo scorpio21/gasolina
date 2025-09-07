@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'guard
   $cada_km = nInt($_POST['cada_km'] ?? null);
   $cada_meses = nInt($_POST['cada_meses'] ?? null);
   $ultima_fecha = t($_POST['ultima_fecha'] ?? '');
+  $ultima_fecha = ($ultima_fecha === '') ? null : $ultima_fecha;
   $ultimo_km = nInt($_POST['ultimo_km'] ?? null);
   $nota = t($_POST['nota'] ?? '');
 
@@ -45,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'guard
   $proximo_km_calc = null;
   if ($cada_km !== null && $ultimo_km !== null) { $proximo_km_calc = max(0, $ultimo_km + $cada_km); }
   $proxima_fecha_calc = null;
-  if ($cada_meses !== null && $ultima_fecha !== '') {
+  if ($cada_meses !== null && $ultima_fecha !== null) {
     $dt = DateTime::createFromFormat('Y-m-d', $ultima_fecha);
     if ($dt) { $dt->modify('+'.$cada_meses.' month'); $proxima_fecha_calc = $dt->format('Y-m-d'); }
   }
@@ -53,11 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'guard
   if (empty($errores)) {
     if ($id === null) {
       $stmt = $db->prepare('INSERT INTO mantenimientos (vehiculo_id, tipo, cada_km, cada_meses, ultima_fecha, ultimo_km, proxima_fecha_calc, proximo_km_calc, nota) VALUES (?,?,?,?,?,?,?,?,?)');
-      if ($stmt) { $stmt->bind_param('isii­siiss', $vehiculoId, $tipo, $cada_km, $cada_meses, $ultima_fecha, $ultimo_km, $proxima_fecha_calc, $proximo_km_calc, $nota); $stmt->execute(); $stmt->close(); }
+      if ($stmt) { $stmt->bind_param('isiisisis', $vehiculoId, $tipo, $cada_km, $cada_meses, $ultima_fecha, $ultimo_km, $proxima_fecha_calc, $proximo_km_calc, $nota); $stmt->execute(); $stmt->close(); }
       header('Location: '.$BASE_URL.'/pages/mantenimientos.php?ok=creado'); exit;
     } else {
       $stmt = $db->prepare('UPDATE mantenimientos SET tipo=?, cada_km=?, cada_meses=?, ultima_fecha=?, ultimo_km=?, proxima_fecha_calc=?, proximo_km_calc=?, nota=? WHERE id=? AND vehiculo_id=?');
-      if ($stmt) { $stmt->bind_param('siisi­sisii', $tipo, $cada_km, $cada_meses, $ultima_fecha, $ultimo_km, $proxima_fecha_calc, $proximo_km_calc, $nota, $id, $vehiculoId); $stmt->execute(); $stmt->close(); }
+      if ($stmt) { $stmt->bind_param('siisisisii', $tipo, $cada_km, $cada_meses, $ultima_fecha, $ultimo_km, $proxima_fecha_calc, $proximo_km_calc, $nota, $id, $vehiculoId); $stmt->execute(); $stmt->close(); }
       header('Location: '.$BASE_URL.'/pages/mantenimientos.php?ok=actualizado'); exit;
     }
   }
