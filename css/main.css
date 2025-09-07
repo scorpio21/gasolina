@@ -77,13 +77,20 @@ body.tema-oscuro .btn-outline-light:hover { background-color: #f5f5f5; color: #2
 /* ===================== */
 .vehiculo-hero .vehiculo-foto {
   width: 120px;
+  max-width: 120px;
   height: auto;
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.15);
 }
 @media (max-width: 576px) {
-  .vehiculo-hero .vehiculo-foto { width: 96px; }
+  .vehiculo-hero .vehiculo-foto { width: 96px; max-width: 96px; }
 }
 body.tema-oscuro .vehiculo-hero .vehiculo-foto {
   box-shadow: 0 4px 10px rgba(255,255,255,0.08);
+}
+
+/* Refuerzo por si se cambia la clase accidentalmente */
+.vehiculo-hero img { max-width: 140px !important; height: auto !important; }
+@media (max-width: 576px) {
+  .vehiculo-hero img { max-width: 100px !important; }
 }
