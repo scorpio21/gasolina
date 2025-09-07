@@ -29,6 +29,7 @@ Aplicación sencilla para registrar y consultar consumos de combustible.
      }
      ```
 
+
    - Opción B: copia `.env.example` a `.env` y ajusta las variables:
 
     ```env
@@ -262,6 +263,39 @@ Desde la versión actual existe una página dedicada para administrar vehículos
   - Botón "Hacer activo": marca el vehículo como activo (se guarda en sesión) y el resto de páginas filtran por él.
   - Seguridad: no permite eliminar un vehículo si tiene consumos asociados.
 
+## Mantenimientos
+
+- Tabla: `mantenimientos` (por vehículo) con campos: `tipo`, `cada_km`, `cada_meses`, `ultima_fecha`, `ultimo_km`, `proxima_fecha_calc`, `proximo_km_calc`, `nota`.
+- Página: `pages/mantenimientos.php` (lista y formulario por vehículo activo).
+- Enlace en navbar: "🛠️ Mantenimientos".
+- Dashboard: tarjetas "Próximos Mantenimientos" en `index.php` (muestra hasta 3, estados: OK/Pronto/Atrasado). Umbrales por defecto: ≤30 días o ≤500 km para estado "Pronto".
+
+### Cómo registrar un mantenimiento
+
+- Solo por km (ej. aceite motor): rellena "Cada (km)" y "Último km".
+- Solo por fecha (ej. ITV): rellena "Cada (meses)" y "Última fecha".
+- Ambos (km y meses): rellena ambos pares de campos.
+
+Al guardar, el sistema calcula `proximo_km_calc` y/o `proxima_fecha_calc`.
+
+### SQL de creación (si tu servidor no ejecuta las migraciones del archivo)
+
+```sql
+CREATE TABLE IF NOT EXISTS mantenimientos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  vehiculo_id INT NOT NULL,
+  tipo VARCHAR(60) NOT NULL,
+  cada_km INT NULL,
+  cada_meses INT NULL,
+  ultima_fecha DATE NULL,
+  ultimo_km INT NULL,
+  proxima_fecha_calc DATE NULL,
+  proximo_km_calc INT NULL,
+  nota TEXT NULL,
+  CONSTRAINT fk_mantenimientos_vehiculo FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
+    ON UPDATE CASCADE ON DELETE CASCADE
+);
+```
 ### Migración SQL (multi‑vehículo + foto)
 
 Ejecuta en tu BD (ajusta si tu motor no soporta IF NOT EXISTS):
