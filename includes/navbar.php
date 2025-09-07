@@ -65,6 +65,9 @@ foreach ($vehiculos as $v) {
           <a class="nav-link" href="<?php echo $base; ?>/pages/vehiculos.php">🚘 Vehículos</a>
         </li>
         <li class="nav-item">
+          <a class="nav-link" href="<?php echo $base; ?>/pages/mantenimientos.php">🛠️ Mantenimientos</a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link" href="<?php echo $base; ?>/pages/formulario.php">➕ Nuevo Repostaje</a>
         </li>
         <li class="nav-item">

@@ -94,6 +94,114 @@ if ($ultimos) {
     <div class="vehiculo-nombre mt-2 fw-semibold"><?php echo e(trim($vehiculoNombre) !== '' ? $vehiculoNombre : 'Vehículo'); ?></div>
   </div>
   <?php endif; ?>
+  <?php
+    // ==========================
+    // Próximos mantenimientos
+    // ==========================
+    $cards = [];
+    if (hasTable('mantenimientos') && $vehiculoId !== null) {
+      // km actuales (vehículo)
+      $kmActuales = 0;
+      $qKm = $conn->query("SELECT MAX(km_actuales) AS k FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : ""));
+      if ($qKm) { $rKm = $qKm->fetch_assoc(); $kmActuales = (int)($rKm['k'] ?? 0); }
+
+      // Lista de mantenimientos del vehículo
+      $stmtM = $conn->prepare("SELECT id, tipo, cada_km, cada_meses, ultima_fecha, ultimo_km, proxima_fecha_calc, proximo_km_calc, nota FROM mantenimientos WHERE vehiculo_id=?");
+      if ($stmtM) {
+        $stmtM->bind_param('i', $vehiculoId);
+        $stmtM->execute();
+        $resM = $stmtM->get_result();
+        $hoy = new DateTime('today');
+        while ($m = $resM->fetch_assoc()) {
+          $estado = 'OK';
+          $badge = 'success';
+          $diasRest = null;
+          $kmRest = null;
+          if (!empty($m['proxima_fecha_calc'])) {
+            $dt = DateTime::createFromFormat('Y-m-d', (string)$m['proxima_fecha_calc']);
+            if ($dt) { $diasRest = (int)$hoy->diff($dt)->format('%r%a'); }
+          }
+          if (!empty($m['proximo_km_calc'])) {
+            $kmRest = (int)$m['proximo_km_calc'] - $kmActuales;
+          }
+          // Determinar estado combinando fecha/km (el peor de ambos)
+          $isAtrasado = ($diasRest !== null && $diasRest < 0) || ($kmRest !== null && $kmRest <= 0);
+          $isPronto = (!$isAtrasado) && ((($diasRest !== null) && $diasRest <= 30) || (($kmRest !== null) && $kmRest <= 500));
+          if ($isAtrasado) { $estado = 'Atrasado'; $badge = 'danger'; }
+          elseif ($isPronto) { $estado = 'Pronto'; $badge = 'warning'; }
+
+          $cards[] = [
+            'id' => (int)$m['id'],
+            'tipo' => (string)$m['tipo'],
+            'ultima_fecha' => $m['ultima_fecha'] ?? null,
+            'ultimo_km' => isset($m['ultimo_km']) ? (int)$m['ultimo_km'] : null,
+            'cada_km' => isset($m['cada_km']) ? (int)$m['cada_km'] : null,
+            'cada_meses' => isset($m['cada_meses']) ? (int)$m['cada_meses'] : null,
+            'proxima_fecha' => $m['proxima_fecha_calc'] ?? null,
+            'proximo_km' => isset($m['proximo_km_calc']) ? (int)$m['proximo_km_calc'] : null,
+            'estado' => $estado,
+            'badge' => $badge,
+            'diasRest' => $diasRest,
+            'kmRest' => $kmRest,
+          ];
+        }
+        $stmtM->close();
+
+        // Ordenar: primero atrasados, luego pronto, luego OK; dentro por el más cercano
+        usort($cards, function($a, $b) {
+          $priority = ['Atrasado'=>0, 'Pronto'=>1, 'OK'=>2];
+          $pa = $priority[$a['estado']] ?? 3; $pb = $priority[$b['estado']] ?? 3;
+          if ($pa !== $pb) return $pa - $pb;
+          // proximidad: menor díasRest o kmRest
+          $aDist = 999999; $bDist = 999999;
+          if ($a['diasRest'] !== null) $aDist = abs((int)$a['diasRest']);
+          if ($a['kmRest'] !== null) $aDist = min($aDist, abs((int)$a['kmRest']));
+          if ($b['diasRest'] !== null) $bDist = abs((int)$b['diasRest']);
+          if ($b['kmRest'] !== null) $bDist = min($bDist, abs((int)$b['kmRest']));
+          return $aDist <=> $bDist;
+        });
+      }
+    }
+  ?>
+  <?php if (!empty($cards)): ?>
+  <div class="mb-4">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+      <h2 class="h4 mb-0">🛠️ Próximos Mantenimientos</h2>
+      <a class="btn btn-sm btn-outline-secondary" href="./pages/mantenimientos.php">Gestionar</a>
+    </div>
+    <div class="row g-3">
+      <?php foreach (array_slice($cards, 0, 3) as $c): ?>
+      <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+              <h5 class="card-title mb-1"><?php echo e($c['tipo']); ?></h5>
+              <span class="badge bg-<?php echo e($c['badge']); ?>"><?php echo e($c['estado']); ?></span>
+            </div>
+            <div class="small text-muted mb-2">
+              Último: <?php echo $c['ultima_fecha'] ? e($c['ultima_fecha']) : '—'; ?>
+              <?php echo $c['ultimo_km'] !== null ? ' / '.(int)$c['ultimo_km'].' km' : ''; ?>
+            </div>
+            <ul class="list-unstyled mb-2">
+              <li>Próximo:
+                <?php echo $c['proxima_fecha'] ? e($c['proxima_fecha']) : '—'; ?>
+                <?php echo $c['proximo_km'] !== null ? ' / '.(int)$c['proximo_km'].' km' : ''; ?>
+              </li>
+              <li>Frecuencia:
+                <?php echo $c['cada_km'] !== null ? (int)$c['cada_km'].' km' : '—'; ?>
+                <?php echo $c['cada_meses'] !== null ? ' / '.(int)$c['cada_meses'].' meses' : ''; ?>
+              </li>
+              <?php if ($c['kmRest'] !== null): ?><li>Restan: <?php echo (int)$c['kmRest']; ?> km</li><?php endif; ?>
+              <?php if ($c['diasRest'] !== null): ?><li>Faltan: <?php echo (int)$c['diasRest']; ?> días</li><?php endif; ?>
+            </ul>
+            <a class="btn btn-sm btn-outline-primary" href="./pages/mantenimientos.php?editar=<?php echo (int)$c['id']; ?>">Marcar como hecho</a>
+          </div>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+  <?php endif; ?>
   <h1 class="mb-4 text-center">📊 Resumen de Consumo</h1>
 
   <div class="row g-4 mb-4">

@@ -44,3 +44,21 @@ ALTER TABLE vehiculos ADD COLUMN IF NOT EXISTS foto_url VARCHAR(255) NULL;
 
 -- Añadir columna 'lleno' si migras desde una versión anterior sin este campo
 ALTER TABLE consumos ADD COLUMN IF NOT EXISTS lleno TINYINT(1) NOT NULL DEFAULT 1;
+
+-- =============================
+-- Mantenimientos (por vehículo)
+-- =============================
+CREATE TABLE IF NOT EXISTS mantenimientos (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  vehiculo_id INT NOT NULL,
+  tipo VARCHAR(60) NOT NULL,
+  cada_km INT NULL,
+  cada_meses INT NULL,
+  ultima_fecha DATE NULL,
+  ultimo_km INT NULL,
+  proxima_fecha_calc DATE NULL,
+  proximo_km_calc INT NULL,
+  nota TEXT NULL,
+  CONSTRAINT fk_mantenimientos_vehiculo FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
+    ON UPDATE CASCADE ON DELETE CASCADE
+);
