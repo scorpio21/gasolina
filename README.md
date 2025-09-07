@@ -250,6 +250,18 @@ Nota: En el historial (`pages/listar.php`) puedes cambiar el orden de la columna
 - Filtro: `index.php`, `pages/listar.php` y `pages/formulario.php` filtran/guardan por el vehículo activo si existe `consumos.vehiculo_id`.
 - Foto: establece `vehiculos.foto_url` con una ruta relativa (p. ej., `img/audi.png`) o una URL absoluta. Se muestra en navbar y como tarjeta en `index.php`.
 
+### Gestión de vehículos (UI)
+
+Desde la versión actual existe una página dedicada para administrar vehículos:
+
+- Ruta: `pages/vehiculos.php`
+- Acceso: enlace "🚘 Vehículos" en la barra (`includes/navbar.php`).
+- Funcionalidad:
+  - Crear, editar y eliminar vehículos.
+  - Campos: marca, modelo, año, combustible, matrícula, VIN, foto_url y (opcional) capacidad_deposito_l.
+  - Botón "Hacer activo": marca el vehículo como activo (se guarda en sesión) y el resto de páginas filtran por él.
+  - Seguridad: no permite eliminar un vehículo si tiene consumos asociados.
+
 ### Migración SQL (multi‑vehículo + foto)
 
 Ejecuta en tu BD (ajusta si tu motor no soporta IF NOT EXISTS):
