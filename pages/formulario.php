@@ -14,6 +14,7 @@ $old = [
     'litros' => '',
     'precio_litro' => '',
     'km_recorridos' => '',
+    'importe_total' => '',
     'lleno' => '1'
 ];
 
@@ -24,19 +25,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $old['litros'] = isset($_POST['litros']) ? (string)$_POST['litros'] : '';
     $old['precio_litro'] = isset($_POST['precio_litro']) ? (string)$_POST['precio_litro'] : '';
     $old['km_recorridos'] = isset($_POST['km_recorridos']) ? (string)$_POST['km_recorridos'] : '';
+    $old['importe_total'] = isset($_POST['importe_total']) ? (string)$_POST['importe_total'] : '';
 
     $fecha = $old['fecha'];
     $km = (int)$old['km_actuales'];
-    $litros = (float)$old['litros'];
     $precio = (float)$old['precio_litro'];
     $km_recorridos_input = ($old['km_recorridos'] !== '') ? (int)$old['km_recorridos'] : null;
+    
+    // Si se proporciona importe_total pero no litros, calcular litros
+    if ($old['importe_total'] !== '' && $old['litros'] === '') {
+        $importe = (float)$old['importe_total'];
+        if ($precio > 0) {
+            $litros = round($importe / $precio, 2);
+            $old['litros'] = (string)$litros;
+        }
+    } else {
+        $litros = (float)$old['litros'];
+    }
 
     // Validaciones del lado del servidor
     if ($fecha === '') { $errores['fecha'] = 'La fecha es obligatoria.'; }
     if (!is_numeric($old['km_actuales']) || $km < 0) { $errores['km_actuales'] = 'Introduce kilómetros actuales válidos (>= 0).'; }
-    if (!is_numeric($old['litros']) || $litros <= 0) { $errores['litros'] = 'Introduce litros válidos (> 0).'; }
     if (!is_numeric($old['precio_litro']) || $precio <= 0) { $errores['precio_litro'] = 'Introduce un precio por litro válido (> 0).'; }
     if ($km_recorridos_input !== null && $km_recorridos_input < 0) { $errores['km_recorridos'] = 'Los km recorridos no pueden ser negativos.'; }
+    
+    // Validar importe_total (obligatorio)
+    if ($old['importe_total'] === '' || !is_numeric($old['importe_total']) || (float)$old['importe_total'] <= 0) {
+        $errores['importe_total'] = 'Introduce un importe total válido (> 0).';
+    }
+    
+    // Validar litros si se proporcionan (opcional)
+    if ($old['litros'] !== '' && (!is_numeric($old['litros']) || (float)$old['litros'] <= 0)) {
+        $errores['litros'] = 'Introduce litros válidos (> 0).';
+    }
+    
     $llenoVal = isset($_POST['lleno']) ? 1 : 0;
 
     // Solo intentamos calcular km_recorridos si no hay errores de entrada
@@ -167,16 +189,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       <div class="form-text">Lectura del cuentakilómetros en el momento de repostar.</div>
     </div>
     <div class="mb-3">
-      <label class="form-label">Litros</label>
-      <input type="number" step="0.01" min="0.01" name="litros" class="form-control <?php echo isset($errores['litros']) ? 'is-invalid' : ''; ?>" required value="<?php echo e($old['litros']); ?>">
-      <?php if (isset($errores['litros'])): ?><div class="invalid-feedback"><?php echo e($errores['litros']); ?></div><?php endif; ?>
-      <div class="form-text">Litros cargados en este repostaje. Se usa para calcular el consumo.</div>
-    </div>
-    <div class="mb-3">
       <label class="form-label">Precio por litro (€)</label>
-      <input type="number" step="0.001" min="0.001" name="precio_litro" class="form-control <?php echo isset($errores['precio_litro']) ? 'is-invalid' : ''; ?>" required value="<?php echo e($old['precio_litro']); ?>">
+      <input type="number" step="0.001" min="0.001" name="precio_litro" id="precio_litro" class="form-control <?php echo isset($errores['precio_litro']) ? 'is-invalid' : ''; ?>" required value="<?php echo e($old['precio_litro']); ?>">
       <?php if (isset($errores['precio_litro'])): ?><div class="invalid-feedback"><?php echo e($errores['precio_litro']); ?></div><?php endif; ?>
-      <div class="form-text">Precio pagado por litro. El importe total se calcula automáticamente.</div>
+      <div class="form-text">Precio pagado por litro.</div>
+    </div>
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Litros (opcional)</label>
+        <input type="number" step="0.01" min="0.01" name="litros" id="litros" class="form-control <?php echo isset($errores['litros']) ? 'is-invalid' : ''; ?>" value="<?php echo e($old['litros']); ?>">
+        <?php if (isset($errores['litros'])): ?><div class="invalid-feedback"><?php echo e($errores['litros']); ?></div><?php endif; ?>
+        <div class="form-text">Se calcula automáticamente si introduces el importe total.</div>
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Importe total (€)</label>
+        <input type="number" step="0.01" min="0.01" name="importe_total" id="importe_total" class="form-control <?php echo isset($errores['importe_total']) ? 'is-invalid' : ''; ?>" required value="<?php echo e($old['importe_total']); ?>">
+        <?php if (isset($errores['importe_total'])): ?><div class="invalid-feedback"><?php echo e($errores['importe_total']); ?></div><?php endif; ?>
+        <div class="form-text">Introduce el importe total pagado. Los litros se calcularán automáticamente.</div>
+      </div>
     </div>
     <div class="mb-3">
       <label class="form-label">Km recorridos (opcional)</label>
@@ -194,5 +224,51 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../js/main.js?v=20250902"></script>
+<script>
+(function() {
+  'use strict';
+  const precioLitro = document.getElementById('precio_litro');
+  const litros = document.getElementById('litros');
+  const importeTotal = document.getElementById('importe_total');
+
+  function calcularLitros() {
+    if (precioLitro.value && importeTotal.value && parseFloat(precioLitro.value) > 0) {
+      const precio = parseFloat(precioLitro.value);
+      const importe = parseFloat(importeTotal.value);
+      litros.value = (importe / precio).toFixed(2);
+    }
+  }
+
+  function calcularImporte() {
+    if (precioLitro.value && litros.value && parseFloat(precioLitro.value) > 0) {
+      const precio = parseFloat(precioLitro.value);
+      const lit = parseFloat(litros.value);
+      importeTotal.value = (lit * precio).toFixed(2);
+    }
+  }
+
+  precioLitro.addEventListener('input', function() {
+    if (importeTotal.value) {
+      calcularLitros();
+    }
+  });
+
+  importeTotal.addEventListener('input', function() {
+    if (this.value) {
+      calcularLitros();
+    } else {
+      litros.value = '';
+    }
+  });
+
+  litros.addEventListener('input', function() {
+    if (this.value) {
+      calcularImporte();
+    } else {
+      importeTotal.value = '';
+    }
+  });
+})();
+</script>
 </body>
 </html>
