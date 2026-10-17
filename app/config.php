@@ -71,6 +71,28 @@ function env(string $key, string $default = ''): string {
     return (string) $val;
 }
 
+/**
+ * Genera y devuelve el token CSRF de la sesión actual.
+ */
+function csrf_token(): string {
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return (string) $_SESSION['csrf_token'];
+}
+
+/**
+ * Rechaza peticiones POST que no procedan de un formulario de esta aplicación.
+ */
+function verify_csrf_token(): void {
+    $token = isset($_POST['csrf_token']) ? (string) $_POST['csrf_token'] : '';
+    if ($token === '' || empty($_SESSION['csrf_token']) ||
+        !hash_equals((string) $_SESSION['csrf_token'], $token)) {
+        http_response_code(403);
+        exit('Solicitud no válida.');
+    }
+}
+
 function getDb(): mysqli {
     static $db = null;
     if ($db instanceof mysqli) {

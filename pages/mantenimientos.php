@@ -18,6 +18,10 @@ function nInt($v): ?int { return ($v === '' || $v === null) ? null : (int)$v; }
 $errores = [];
 $editId = isset($_GET['editar']) && ctype_digit((string)$_GET['editar']) ? (int)$_GET['editar'] : null;
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  verify_csrf_token();
+}
+
 // Borrar
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'eliminar') {
   $id = (int)($_POST['id'] ?? 0);
@@ -129,6 +133,7 @@ if ($editId !== null) {
                   <td class="d-flex gap-2">
                     <a href="?editar=<?php echo (int)$it['id']; ?>" class="btn btn-sm btn-secondary">Editar</a>
                     <form method="post" onsubmit="return confirm('¿Eliminar mantenimiento?');">
+                      <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                       <input type="hidden" name="accion" value="eliminar">
                       <input type="hidden" name="id" value="<?php echo (int)$it['id']; ?>">
                       <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
@@ -146,6 +151,7 @@ if ($editId !== null) {
         <div class="card-header"><?php echo $edit ? 'Editar mantenimiento' : 'Nuevo mantenimiento'; ?></div>
         <div class="card-body">
           <form method="post" class="row g-3">
+            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
             <input type="hidden" name="accion" value="guardar">
             <?php if ($edit): ?><input type="hidden" name="id" value="<?php echo (int)$edit['id']; ?>"><?php endif; ?>
             <div class="col-12">

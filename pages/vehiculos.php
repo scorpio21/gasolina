@@ -29,6 +29,10 @@ $cols = [
 $errores = [];
 $editId = isset($_GET['editar']) && ctype_digit((string)$_GET['editar']) ? (int)$_GET['editar'] : null;
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+  verify_csrf_token();
+}
+
 // Activar vehículo
 if (isset($_GET['activar']) && ctype_digit((string)$_GET['activar'])) {
   $activarId = (int)$_GET['activar'];
@@ -189,6 +193,7 @@ if ($editId !== null) {
                     <a href="?editar=<?php echo (int)$v['id']; ?>" class="btn btn-sm btn-secondary">Editar</a>
                     <a href="?activar=<?php echo (int)$v['id']; ?>" class="btn btn-sm btn-outline-primary">Hacer activo</a>
                     <form method="post" onsubmit="return confirm('¿Seguro que deseas eliminar este vehículo?');">
+                      <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                       <input type="hidden" name="accion" value="eliminar">
                       <input type="hidden" name="id" value="<?php echo (int)$v['id']; ?>">
                       <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
@@ -206,6 +211,7 @@ if ($editId !== null) {
         <div class="card-header"><?php echo $editRow ? 'Editar vehículo' : 'Nuevo vehículo'; ?></div>
         <div class="card-body">
           <form method="post" class="row g-3">
+            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
             <input type="hidden" name="accion" value="guardar">
             <?php if ($editRow): ?><input type="hidden" name="id" value="<?php echo (int)$editRow['id']; ?>"><?php endif; ?>
             <div class="col-12">

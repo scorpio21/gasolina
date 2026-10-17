@@ -19,6 +19,7 @@ $old = [
 ];
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    verify_csrf_token();
     // Sanitización básica y conservación de valores previos
     $old['fecha'] = isset($_POST['fecha']) ? (string)$_POST['fecha'] : '';
     $old['km_actuales'] = isset($_POST['km_actuales']) ? (string)$_POST['km_actuales'] : '';
@@ -176,6 +177,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
   <?php endif; ?>
   <form method="post" class="card p-4 shadow" novalidate>
+    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
     <div class="mb-3">
       <label class="form-label">Fecha</label>
       <input type="date" name="fecha" class="form-control <?php echo isset($errores['fecha']) ? 'is-invalid' : ''; ?>" required value="<?php echo e($old['fecha']); ?>">

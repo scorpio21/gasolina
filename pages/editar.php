@@ -7,6 +7,7 @@ $conn = getDb();
 // Sanitizar/validar ID
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verify_csrf_token();
     $id = isset($_POST['id']) ? (int)$_POST['id'] : 0;
 }
 if ($id <= 0) {
@@ -134,6 +135,7 @@ if (!$registro) {
   <?php endif; ?>
 
   <form method="post" class="card p-4 shadow">
+    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
     <input type="hidden" name="id" value="<?php echo (int)$id; ?>">
     <div class="row g-3">
       <div class="col-md-4">
@@ -167,6 +169,7 @@ if (!$registro) {
     </div>
   </form>
   <form method="post" class="mt-2" onsubmit="return confirm('¿Seguro que deseas eliminar este repostaje? Esta acción no se puede deshacer.');">
+    <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
     <input type="hidden" name="id" value="<?php echo (int)$id; ?>">
     <input type="hidden" name="accion" value="eliminar">
     <button type="submit" class="btn btn-outline-danger">🗑️ Eliminar registro</button>
