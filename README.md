@@ -144,6 +144,8 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 - "Depósito lleno" y cálculo real "lleno a lleno" (badge en historial y cálculo automático al guardar el segundo lleno).
 - UI con Bootstrap 5 y navegación simple.
 - Seguridad básica en `.htaccess` (bloqueo de dotfiles y carpeta `sql/`).
+- Protección CSRF en formularios que crean, editan, eliminan o activan datos.
+- Cookie de sesión con `HttpOnly`, `SameSite=Lax` y `Secure` cuando se usa HTTPS.
 - Exportación a PDF del historial desde `pages/listar.php` con diseño de cabecera/pie y paginación automática.
 
 ## 2) Estructura del proyecto
@@ -235,6 +237,18 @@ Nota: En el historial (`pages/listar.php`) puedes cambiar el orden de la columna
 3. Crea `htdocs/app/env.php` con tus valores: `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`.
 4. Verifica que funciona accediendo a `/pages/listar.php` y creando un registro en `/pages/formulario.php`.
 5. Mantén `.htaccess` con las reglas de seguridad. Fuerza HTTPS solo si tu dominio ya tiene SSL.
+
+### Migración opcional a InnoDB
+
+`sql/migracion_002_innodb.sql` sirve para una base de datos ya existente. Antes de ejecutarla:
+
+1. Exporta una copia completa de la base de datos.
+2. Ejecuta las dos consultas de comprobación inicial; ambas deben devolver `0`.
+3. Ejecuta el resto del archivo una sola vez.
+4. Comprueba que las tablas usan InnoDB y que los registros siguen presentes.
+
+La migración no borra registros, pero no debe repetirse porque intenta crear las mismas claves foráneas.
+Si phpMyAdmin no está disponible, no ejecutes cambios en producción: conserva la copia y espera a que el servicio vuelva a responder.
 
 ## 7) Solución de problemas (Troubleshooting)
 
