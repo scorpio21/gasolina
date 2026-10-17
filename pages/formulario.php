@@ -90,7 +90,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km)
                                         VALUES (?, ?, ?, ?, ?, ?)");
         }
-        if ($stmt) {
+        $insertado = false;
+        if (!$stmt) {
+            $errores[] = 'No se pudo preparar el alta del repostaje.';
+        } else {
             if ($useVeh && $useLleno) {
                 $stmt->bind_param("siddidii", $fecha, $km, $litros, $precio, $km_recorridos, $consumo, $vehiculoId, $llenoVal);
             } elseif ($useVeh && !$useLleno) {
@@ -100,11 +103,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             } else {
                 $stmt->bind_param("siddid", $fecha, $km, $litros, $precio, $km_recorridos, $consumo);
             }
-            $stmt->execute();
+            if ($stmt->execute()) {
+                $insertado = true;
+            } else {
+                $errores[] = 'No se pudo guardar el repostaje.';
+            }
             $stmt->close();
 
             // Si guardamos 'lleno', recalculamos consumo real "lleno a lleno" para este registro
-            if ($useLleno && $llenoVal === 1) {
+            if ($insertado && $useLleno && $llenoVal === 1) {
                 $nuevoId = $conexion->insert_id;
                 if ($nuevoId > 0) {
                     // Buscar el último 'lleno' anterior (mismo vehículo si aplica)
@@ -135,8 +142,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 }
             }
         }
-        header("Location: " . $BASE_URL . "/pages/listar.php?creado=1");
-        exit;
+        if ($insertado && empty($errores)) {
+            header("Location: " . $BASE_URL . "/pages/listar.php?creado=1");
+            exit;
+        }
     }
 }
 ?>

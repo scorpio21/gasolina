@@ -27,10 +27,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'elimi
   $id = (int)($_POST['id'] ?? 0);
   if ($id > 0) {
     $stmt = $db->prepare('DELETE FROM mantenimientos WHERE id=? AND vehiculo_id=?');
-    if ($stmt) { $stmt->bind_param('ii',$id,$vehiculoId); $stmt->execute(); $stmt->close(); }
+    if (!$stmt) {
+      $errores[] = 'No se pudo preparar el borrado.';
+    } else {
+      $stmt->bind_param('ii',$id,$vehiculoId);
+      if (!$stmt->execute()) { $errores[] = 'No se pudo eliminar el mantenimiento.'; }
+      $stmt->close();
+    }
+  } else {
+    $errores[] = 'Identificador de mantenimiento no válido.';
   }
-  header('Location: '.$BASE_URL.'/pages/mantenimientos.php?ok=eliminado');
-  exit;
+  if (empty($errores)) {
+    header('Location: '.$BASE_URL.'/pages/mantenimientos.php?ok=eliminado');
+    exit;
+  }
 }
 
 // Guardar (crear/editar)
@@ -58,12 +68,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'guard
   if (empty($errores)) {
     if ($id === null) {
       $stmt = $db->prepare('INSERT INTO mantenimientos (vehiculo_id, tipo, cada_km, cada_meses, ultima_fecha, ultimo_km, proxima_fecha_calc, proximo_km_calc, nota) VALUES (?,?,?,?,?,?,?,?,?)');
-      if ($stmt) { $stmt->bind_param('isiisisis', $vehiculoId, $tipo, $cada_km, $cada_meses, $ultima_fecha, $ultimo_km, $proxima_fecha_calc, $proximo_km_calc, $nota); $stmt->execute(); $stmt->close(); }
-      header('Location: '.$BASE_URL.'/pages/mantenimientos.php?ok=creado'); exit;
+      if (!$stmt) {
+        $errores[] = 'No se pudo preparar el alta.';
+      } else {
+        $stmt->bind_param('isiisisis', $vehiculoId, $tipo, $cada_km, $cada_meses, $ultima_fecha, $ultimo_km, $proxima_fecha_calc, $proximo_km_calc, $nota);
+        if (!$stmt->execute()) { $errores[] = 'No se pudo guardar el mantenimiento.'; }
+        $stmt->close();
+      }
+      if (empty($errores)) { header('Location: '.$BASE_URL.'/pages/mantenimientos.php?ok=creado'); exit; }
     } else {
       $stmt = $db->prepare('UPDATE mantenimientos SET tipo=?, cada_km=?, cada_meses=?, ultima_fecha=?, ultimo_km=?, proxima_fecha_calc=?, proximo_km_calc=?, nota=? WHERE id=? AND vehiculo_id=?');
-      if ($stmt) { $stmt->bind_param('siisisisii', $tipo, $cada_km, $cada_meses, $ultima_fecha, $ultimo_km, $proxima_fecha_calc, $proximo_km_calc, $nota, $id, $vehiculoId); $stmt->execute(); $stmt->close(); }
-      header('Location: '.$BASE_URL.'/pages/mantenimientos.php?ok=actualizado'); exit;
+      if (!$stmt) {
+        $errores[] = 'No se pudo preparar la actualización.';
+      } else {
+        $stmt->bind_param('siisisisii', $tipo, $cada_km, $cada_meses, $ultima_fecha, $ultimo_km, $proxima_fecha_calc, $proximo_km_calc, $nota, $id, $vehiculoId);
+        if (!$stmt->execute()) { $errores[] = 'No se pudo actualizar el mantenimiento.'; }
+        $stmt->close();
+      }
+      if (empty($errores)) { header('Location: '.$BASE_URL.'/pages/mantenimientos.php?ok=actualizado'); exit; }
     }
   }
 }
