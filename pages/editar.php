@@ -3,6 +3,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../app/config.php';
 
 $conn = getDb();
+$vehiculoId = getActiveVehiculoId();
+$useVehiculoScope = hasColumn('consumos', 'vehiculo_id') && $vehiculoId !== null;
 
 // Sanitizar/validar ID
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -22,11 +24,19 @@ $exito = false;
 // Si es POST, procesar actualización
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($_POST['accion'] ?? '') === 'eliminar') {
-        $stmt = $conn->prepare('DELETE FROM consumos WHERE id = ?');
+        $sqlDelete = 'DELETE FROM consumos WHERE id = ?';
+        if ($useVehiculoScope) {
+            $sqlDelete .= ' AND vehiculo_id = ?';
+        }
+        $stmt = $conn->prepare($sqlDelete);
         if (!$stmt) {
             $errores[] = 'Error al preparar el borrado.';
         } else {
-            $stmt->bind_param('i', $id);
+            if ($useVehiculoScope) {
+                $stmt->bind_param('ii', $id, $vehiculoId);
+            } else {
+                $stmt->bind_param('i', $id);
+            }
             if ($stmt->execute() && $stmt->affected_rows > 0) {
                 $stmt->close();
                 header('Location: listar.php?eliminado=1');
@@ -53,23 +63,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($precioLitro === null || $precioLitro <= 0) { $errores[] = 'Precio/L debe ser un número mayor que 0.'; }
 
     if (empty($errores)) {
-        $stmt = $conn->prepare("UPDATE consumos
+        $sqlUpdate = "UPDATE consumos
             SET fecha = ?, km_actuales = ?, litros = ?, precio_litro = ?, km_recorridos = ?, consumo_100km = ?
-            WHERE id = ?");
+            WHERE id = ?";
+        if ($useVehiculoScope) {
+            $sqlUpdate .= ' AND vehiculo_id = ?';
+        }
+        $stmt = $conn->prepare($sqlUpdate);
         if (!$stmt) {
             $errores[] = 'Error al preparar la consulta.';
         } else {
             // Nota: pasar null en bind_param envía NULL a MySQL
-            $stmt->bind_param(
-                'siddidi',
-                $fecha,
-                $kmActuales,
-                $litros,
-                $precioLitro,
-                $kmRecorridos,
-                $consumo100,
-                $id
-            );
+            if ($useVehiculoScope) {
+                $stmt->bind_param(
+                    'siddidii',
+                    $fecha,
+                    $kmActuales,
+                    $litros,
+                    $precioLitro,
+                    $kmRecorridos,
+                    $consumo100,
+                    $id,
+                    $vehiculoId
+                );
+            } else {
+                $stmt->bind_param(
+                    'siddidi',
+                    $fecha,
+                    $kmActuales,
+                    $litros,
+                    $precioLitro,
+                    $kmRecorridos,
+                    $consumo100,
+                    $id
+                );
+            }
             if ($stmt->execute()) {
                 // Redirigir con flag de éxito
                 header('Location: listar.php?actualizado=1');
@@ -83,9 +111,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Obtener datos actuales para precargar formulario
-$stmtSel = $conn->prepare('SELECT fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km FROM consumos WHERE id = ? LIMIT 1');
-$stmtSel->bind_param('i', $id);
+// Obtener datos actuales para precargar formulario, respetando el vehículo activo.
+$sqlSelect = 'SELECT fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km FROM consumos WHERE id = ?';
+if ($useVehiculoScope) {
+    $sqlSelect .= ' AND vehiculo_id = ?';
+}
+$sqlSelect .= ' LIMIT 1';
+$stmtSel = $conn->prepare($sqlSelect);
+if ($useVehiculoScope) {
+    $stmtSel->bind_param('ii', $id, $vehiculoId);
+} else {
+    $stmtSel->bind_param('i', $id);
+}
 $stmtSel->execute();
 $res = $stmtSel->get_result();
 $registro = $res ? $res->fetch_assoc() : null;
