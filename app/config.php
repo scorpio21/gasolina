@@ -3,6 +3,12 @@ declare(strict_types=1);
 
 // Sesión para preferencias (p.ej., vehiculo activo)
 if (session_status() !== PHP_SESSION_ACTIVE) {
+    $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    session_set_cookie_params([
+        'httponly' => true,
+        'secure' => $https,
+        'samesite' => 'Lax',
+    ]);
     session_start();
 }
 
