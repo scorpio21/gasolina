@@ -34,8 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Activar vehículo
-if (isset($_GET['activar']) && ctype_digit((string)$_GET['activar'])) {
-  $activarId = (int)$_GET['activar'];
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'activar' && ctype_digit((string)($_POST['id'] ?? ''))) {
+  $activarId = (int)$_POST['id'];
   setActiveVehiculoId($activarId);
   if ($cols['activo']) {
     $db->query("UPDATE vehiculos SET activo=0");
@@ -191,7 +191,12 @@ if ($editId !== null) {
                   <?php if ($cols['activo']): ?><td><?php echo isset($v['activo']) && (int)$v['activo']===1 ? 'Sí' : 'No'; ?></td><?php endif; ?>
                   <td class="d-flex gap-2">
                     <a href="?editar=<?php echo (int)$v['id']; ?>" class="btn btn-sm btn-secondary">Editar</a>
-                    <a href="?activar=<?php echo (int)$v['id']; ?>" class="btn btn-sm btn-outline-primary">Hacer activo</a>
+                    <form method="post">
+                      <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                      <input type="hidden" name="accion" value="activar">
+                      <input type="hidden" name="id" value="<?php echo (int)$v['id']; ?>">
+                      <button type="submit" class="btn btn-sm btn-outline-primary">Hacer activo</button>
+                    </form>
                     <form method="post" onsubmit="return confirm('¿Seguro que deseas eliminar este vehículo?');">
                       <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
                       <input type="hidden" name="accion" value="eliminar">
