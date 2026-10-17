@@ -36,14 +36,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Activar vehículo
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['accion'] ?? '') === 'activar' && ctype_digit((string)($_POST['id'] ?? ''))) {
   $activarId = (int)$_POST['id'];
-  setActiveVehiculoId($activarId);
+  $activado = true;
   if ($cols['activo']) {
-    $db->query("UPDATE vehiculos SET activo=0");
+    if (!$db->query("UPDATE vehiculos SET activo=0")) {
+      $errores[] = 'No se pudo actualizar el vehículo activo.';
+      $activado = false;
+    }
     $stmt = $db->prepare("UPDATE vehiculos SET activo=1 WHERE id=?");
-    if ($stmt) { $stmt->bind_param('i', $activarId); $stmt->execute(); $stmt->close(); }
+    if (!$stmt) {
+      $errores[] = 'No se pudo preparar la activación.';
+      $activado = false;
+    } else {
+      $stmt->bind_param('i', $activarId);
+      if (!$stmt->execute() || $stmt->affected_rows < 1) {
+        $errores[] = 'No se pudo activar el vehículo seleccionado.';
+        $activado = false;
+      }
+      $stmt->close();
+    }
   }
-  header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=activado');
-  exit;
+  if ($activado && empty($errores)) {
+    setActiveVehiculoId($activarId);
+    header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=activado');
+    exit;
+  }
 }
 
 // Eliminar vehículo (solo POST)
@@ -52,16 +68,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (isset($_POST['accion']) && $_POST[
   if ($id > 0) {
     // Solo permitir borrar si no hay consumos asociados
     $res = $db->query("SELECT COUNT(*) AS c FROM consumos WHERE vehiculo_id=".(int)$id);
-    $c = $res ? (int)$res->fetch_assoc()['c'] : 0;
-    if ($c > 0) {
+    if (!$res) {
+      $errores[] = 'No se pudo comprobar si el vehículo tiene consumos.';
+    } elseif ((int)$res->fetch_assoc()['c'] > 0) {
       $errores[] = 'No puedes borrar un vehículo con consumos asociados.';
     } else {
       $stmt = $db->prepare("DELETE FROM vehiculos WHERE id=?");
-      if ($stmt) { $stmt->bind_param('i',$id); $stmt->execute(); $stmt->close(); }
-      if (getActiveVehiculoId() === $id) { setActiveVehiculoId(null); }
-      header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=eliminado');
-      exit;
+      if (!$stmt) {
+        $errores[] = 'No se pudo preparar el borrado del vehículo.';
+      } else {
+        $stmt->bind_param('i',$id);
+        if (!$stmt->execute() || $stmt->affected_rows < 1) {
+          $errores[] = 'No se pudo eliminar el vehículo.';
+        }
+        $stmt->close();
+      }
+      if (empty($errores)) {
+        if (getActiveVehiculoId() === $id) { setActiveVehiculoId(null); }
+        header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=eliminado');
+        exit;
+      }
     }
+  } else {
+    $errores[] = 'Identificador de vehículo no válido.';
   }
 }
 
@@ -97,15 +126,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
       if ($cols['activo']) { $campos[]='activo'; $place[]='?'; $tipos.='i'; $vals[]=&$activo; }
       $sql = 'INSERT INTO vehiculos ('.implode(',',$campos).') VALUES ('.implode(',',$place).')';
       $stmt = $db->prepare($sql);
-      if ($stmt) {
+      if (!$stmt) {
+        $errores[] = 'No se pudo preparar el alta del vehículo.';
+      } else {
         $stmt->bind_param($tipos, ...$vals);
-        $stmt->execute();
+        if (!$stmt->execute()) {
+          $errores[] = 'No se pudo guardar el vehículo.';
+        }
         $nuevoId = $stmt->insert_id;
         $stmt->close();
-        if ($activo && $cols['activo']) { $db->query('UPDATE vehiculos SET activo=0 WHERE id<>'.(int)$nuevoId); }
+        if (empty($errores) && $activo && $cols['activo'] && !$db->query('UPDATE vehiculos SET activo=0 WHERE id<>'.(int)$nuevoId)) {
+          $errores[] = 'El vehículo se guardó, pero no se pudo actualizar el vehículo activo.';
+        }
       }
-      header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=creado');
-      exit;
+      if (empty($errores)) { header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=creado'); exit; }
     } else {
       // UPDATE
       $set = ['marca=?','modelo=?'];
@@ -122,10 +156,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
       $vals[]=&$id;
       $sql='UPDATE vehiculos SET '.implode(',',$set).' WHERE id=?';
       $stmt=$db->prepare($sql);
-      if ($stmt) { $stmt->bind_param($tipos, ...$vals); $stmt->execute(); $stmt->close(); }
-      if ($cols['activo'] && $activo) { $db->query('UPDATE vehiculos SET activo=0 WHERE id<>'.(int)$id); }
-      header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=actualizado');
-      exit;
+      if (!$stmt) {
+        $errores[] = 'No se pudo preparar la actualización del vehículo.';
+      } else {
+        $stmt->bind_param($tipos, ...$vals);
+        if (!$stmt->execute()) { $errores[] = 'No se pudo actualizar el vehículo.'; }
+        $stmt->close();
+      }
+      if (empty($errores) && $cols['activo'] && $activo && !$db->query('UPDATE vehiculos SET activo=0 WHERE id<>'.(int)$id)) {
+        $errores[] = 'El vehículo se actualizó, pero no se pudo actualizar el vehículo activo.';
+      }
+      if (empty($errores)) { header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=actualizado'); exit; }
     }
   }
 }
