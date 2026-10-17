@@ -267,6 +267,8 @@ Si phpMyAdmin no está disponible, no ejecutes cambios en producción: conserva 
 
 `sql/migracion_003_indices.sql` añade índices para acelerar el historial, el vehículo activo y los mantenimientos. También es de ejecución única: comprueba antes con `SHOW INDEX` que esos nombres no existan.
 
+La lista completa de despliegue está en `DEPLOYMENT_CHECKLIST.md`.
+
 ## 7) Solución de problemas (Troubleshooting)
 
 - Error 500 al cargar: en hostings con PHP < 8, asegúrate de usar la versión de `app/config.php` compatible (ya incluida). Verifica que `env.php/.env` están bien ubicados y legibles.
