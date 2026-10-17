@@ -167,7 +167,9 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 │  ├─ formulario.php     # Alta de repostajes
 │  └─ listar.php         # Historial
 ├─ sql/
-│  └─ gasolinaBD.sql     # Esquema base de datos
+│  ├─ gasolinaBD.sql     # Esquema base de datos
+│  ├─ migracion_002_innodb.sql
+│  └─ migracion_003_indices.sql
 ├─ test/
 │  └─ diagnostico.php    # (Debug local) No subir a producción
 ├─ .htaccess
@@ -262,6 +264,8 @@ Genera el hash con `password_hash()` y no guardes nunca la contraseña en el rep
 
 La migración no borra registros, pero no debe repetirse porque intenta crear las mismas claves foráneas.
 Si phpMyAdmin no está disponible, no ejecutes cambios en producción: conserva la copia y espera a que el servicio vuelva a responder.
+
+`sql/migracion_003_indices.sql` añade índices para acelerar el historial, el vehículo activo y los mantenimientos. También es de ejecución única: comprueba antes con `SHOW INDEX` que esos nombres no existan.
 
 ## 7) Solución de problemas (Troubleshooting)
 

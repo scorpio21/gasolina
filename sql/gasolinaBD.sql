@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS vehiculos (
   vin VARCHAR(32) NULL,
   foto_url VARCHAR(255) NULL,
   capacidad_deposito_l DECIMAL(5,1) NULL,
-  activo TINYINT(1) NOT NULL DEFAULT 1
+  activo TINYINT(1) NOT NULL DEFAULT 1,
+  KEY idx_vehiculos_activo (activo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS consumos (
@@ -26,6 +27,7 @@ CREATE TABLE IF NOT EXISTS consumos (
   consumo_100km DECIMAL(6,2) NULL,
   vehiculo_id INT NULL,
   lleno TINYINT(1) NOT NULL DEFAULT 1,
+  KEY idx_consumos_vehiculo_fecha (vehiculo_id, fecha),
   CONSTRAINT fk_consumos_vehiculo
     FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
     ON UPDATE CASCADE ON DELETE SET NULL
@@ -42,6 +44,7 @@ CREATE TABLE IF NOT EXISTS mantenimientos (
   proxima_fecha_calc DATE NULL,
   proximo_km_calc INT NULL,
   nota TEXT NULL,
+  KEY idx_mantenimientos_vehiculo_fecha (vehiculo_id, proxima_fecha_calc),
   CONSTRAINT fk_mantenimientos_vehiculo
     FOREIGN KEY (vehiculo_id) REFERENCES vehiculos(id)
     ON UPDATE CASCADE ON DELETE CASCADE
