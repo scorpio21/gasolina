@@ -20,6 +20,23 @@ $exito = false;
 
 // Si es POST, procesar actualización
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (($_POST['accion'] ?? '') === 'eliminar') {
+        $stmt = $conn->prepare('DELETE FROM consumos WHERE id = ?');
+        if (!$stmt) {
+            $errores[] = 'Error al preparar el borrado.';
+        } else {
+            $stmt->bind_param('i', $id);
+            if ($stmt->execute() && $stmt->affected_rows > 0) {
+                $stmt->close();
+                header('Location: listar.php?eliminado=1');
+                exit;
+            }
+            $errores[] = 'No se pudo eliminar el registro.';
+            $stmt->close();
+        }
+    }
+
+    if (($_POST['accion'] ?? '') !== 'eliminar') {
     // Recibir valores
     $fecha = trim($_POST['fecha'] ?? '');
     $kmActuales = isset($_POST['km_actuales']) ? (int)$_POST['km_actuales'] : null;
@@ -61,6 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             $stmt->close();
         }
+    }
     }
 }
 
@@ -143,10 +161,15 @@ if (!$registro) {
         <input type="number" step="0.01" min="0" name="consumo_100km" class="form-control" value="<?php echo $registro['consumo_100km'] !== null ? e((string)$registro['consumo_100km']) : ''; ?>">
       </div>
     </div>
-    <div class="mt-4 d-flex gap-2">
+    <div class="mt-4 d-flex flex-wrap gap-2">
       <button type="submit" class="btn btn-primary">Guardar cambios</button>
       <a href="listar.php" class="btn btn-secondary">Cancelar</a>
     </div>
+  </form>
+  <form method="post" class="mt-2" onsubmit="return confirm('¿Seguro que deseas eliminar este repostaje? Esta acción no se puede deshacer.');">
+    <input type="hidden" name="id" value="<?php echo (int)$id; ?>">
+    <input type="hidden" name="accion" value="eliminar">
+    <button type="submit" class="btn btn-outline-danger">🗑️ Eliminar registro</button>
   </form>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

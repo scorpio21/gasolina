@@ -133,6 +133,9 @@ if ($resMes) {
   <?php if (isset($_GET['actualizado']) && $_GET['actualizado'] === '1'): ?>
     <div class="alert alert-success">Registro actualizado correctamente.</div>
   <?php endif; ?>
+  <?php if (isset($_GET['eliminado']) && $_GET['eliminado'] === '1'): ?>
+    <div class="alert alert-success">Registro eliminado correctamente.</div>
+  <?php endif; ?>
   <section id="historial-export" class="bg-white p-3 rounded border">
     <div class="export-header d-flex align-items-center justify-content-between mb-3">
       <div class="d-flex align-items-center gap-2">

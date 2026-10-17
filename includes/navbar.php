@@ -1,5 +1,6 @@
 <?php
 $base = isset($BASE_URL) ? $BASE_URL : '.';
+$homeUrl = 'https://gasolina.xo.je/';
 // Si llega un cambio de vehículo vía GET, lo aplicamos a la sesión
 if (isset($_GET['vehiculo'])) {
   $vid = is_numeric($_GET['vehiculo']) ? (int)$_GET['vehiculo'] : null;
@@ -26,6 +27,9 @@ foreach ($vehiculos as $v) {
     </button>
     <div class="collapse navbar-collapse" id="menu">
       <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
+        <li class="nav-item">
+          <a class="nav-link" href="<?php echo e($homeUrl); ?>">🏠 Inicio</a>
+        </li>
         <?php if (!empty($vehiculos)): ?>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
