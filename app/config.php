@@ -99,6 +99,30 @@ function verify_csrf_token(): void {
     }
 }
 
+/**
+ * Indica si la autenticación está activada mediante configuración.
+ */
+function auth_is_enabled(): bool {
+    return env('AUTH_ENABLED', '0') === '1';
+}
+
+/**
+ * Exige una sesión autenticada cuando AUTH_ENABLED=1.
+ */
+function require_auth(): void {
+    if (!auth_is_enabled() || !empty($_SESSION['authenticated'])) {
+        return;
+    }
+
+    $loginPath = (strpos((string)($_SERVER['SCRIPT_NAME'] ?? ''), '/pages/') !== false)
+        ? 'login.php'
+        : 'pages/login.php';
+    $return = (string)($_SERVER['REQUEST_URI'] ?? '');
+    $query = $return !== '' ? '?return=' . rawurlencode($return) : '';
+    header('Location: ' . $loginPath . $query);
+    exit;
+}
+
 function getDb(): mysqli {
     static $db = null;
     if ($db instanceof mysqli) {

@@ -146,6 +146,7 @@ Aplicación ligera para registrar repostajes y consultar el historial de consumo
 - Seguridad básica en `.htaccess` (bloqueo de dotfiles y carpeta `sql/`).
 - Protección CSRF en formularios que crean, editan, eliminan o activan datos.
 - Cookie de sesión con `HttpOnly`, `SameSite=Lax` y `Secure` cuando se usa HTTPS.
+- Autenticación opcional mediante usuario y hash configurados en variables de entorno.
 - Exportación a PDF del historial desde `pages/listar.php` con diseño de cabecera/pie y paginación automática.
 
 ## 2) Estructura del proyecto
@@ -237,6 +238,18 @@ Nota: En el historial (`pages/listar.php`) puedes cambiar el orden de la columna
 3. Crea `htdocs/app/env.php` con tus valores: `DB_HOST`, `DB_USER`, `DB_PASS`, `DB_NAME`.
 4. Verifica que funciona accediendo a `/pages/listar.php` y creando un registro en `/pages/formulario.php`.
 5. Mantén `.htaccess` con las reglas de seguridad. Fuerza HTTPS solo si tu dominio ya tiene SSL.
+
+### Activar autenticación
+
+La autenticación está desactivada por defecto para no romper instalaciones existentes. Para activarla, configura en `.env` o `app/env.php`:
+
+```env
+AUTH_ENABLED=1
+AUTH_USER=tu_usuario
+AUTH_PASSWORD_HASH=hash_generado_con_password_hash
+```
+
+Genera el hash con `password_hash()` y no guardes nunca la contraseña en el repositorio. Comprueba primero el acceso en local antes de subir la configuración al hosting.
 
 ### Migración opcional a InnoDB
 

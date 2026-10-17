@@ -83,6 +83,11 @@ foreach ($vehiculos as $v) {
             <span class="visually-hidden">Cambiar tema</span>
           </button>
         </li>
+        <?php if (function_exists('auth_is_enabled') && auth_is_enabled() && !empty($_SESSION['authenticated'])): ?>
+        <li class="nav-item">
+          <a class="nav-link" href="<?php echo $base; ?>/pages/logout.php">🚪 Salir</a>
+        </li>
+        <?php endif; ?>
       </ul>
     </div>
   </div>
