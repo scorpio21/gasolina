@@ -190,12 +190,14 @@ if ($editId !== null) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Vehículos - Control Gasolina</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  <link href="<?php echo $BASE_URL; ?>/css/main.css?v=20250902" rel="stylesheet">
+  <link href="<?php echo $BASE_URL; ?>/css/main.css?v=20261020" rel="stylesheet">
 </head>
 <body>
 <?php include __DIR__ . '/../includes/navbar.php'; ?>
-<div class="container py-4">
-  <h1 class="mb-4">🚘 Vehículos</h1>
+<main class="container page-shell">
+  <div class="page-heading">
+    <div><div class="dashboard-kicker mb-1">Tu garaje</div><h1>Vehículos</h1><p>Elige el vehículo activo para separar sus consumos.</p></div>
+  </div>
 
   <?php if (!empty($errores)): ?>
     <div class="alert alert-danger"><ul class="mb-0"><?php foreach($errores as $e){ echo '<li>'.e($e).'</li>'; } ?></ul></div>
@@ -231,7 +233,7 @@ if ($editId !== null) {
                   <?php if ($cols['combustible']): ?><td><?php echo e((string)($v['combustible'] ?? '')); ?></td><?php endif; ?>
                   <?php if ($cols['foto_url']): ?><td><?php if (!empty($v['foto_url'])): ?><img src="<?php echo e((strpos($v['foto_url'],'http')===0)?$v['foto_url']:$BASE_URL.'/'.ltrim($v['foto_url'],'/')); ?>" alt="foto" width="40"><?php endif; ?></td><?php endif; ?>
                   <?php if ($cols['activo']): ?><td><?php echo isset($v['activo']) && (int)$v['activo']===1 ? 'Sí' : 'No'; ?></td><?php endif; ?>
-                  <td class="d-flex gap-2">
+                  <td><div class="vehicle-actions">
                     <a href="?editar=<?php echo (int)$v['id']; ?>" class="btn btn-sm btn-secondary">Editar</a>
                     <form method="post">
                       <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
@@ -245,7 +247,7 @@ if ($editId !== null) {
                       <input type="hidden" name="id" value="<?php echo (int)$v['id']; ?>">
                       <button class="btn btn-sm btn-outline-danger" type="submit">Eliminar</button>
                     </form>
-                  </td>
+                  </div></td>
                 </tr>
               <?php endforeach; endif; ?>
             </tbody>
@@ -320,7 +322,7 @@ if ($editId !== null) {
       </div>
     </div>
   </div>
-</div>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 </body>
 </html>

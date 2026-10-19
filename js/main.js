@@ -235,15 +235,15 @@
             datasets: [{
               label: 'Gasto (€)',
               data: importesC,
-              borderColor: '#0d6efd',
-              backgroundColor: 'rgba(13,110,253,0.15)',
+              borderColor: '#5bd6bc',
+              backgroundColor: 'rgba(91,214,188,0.15)',
               tension: 0.25,
               fill: true,
               pointRadius: 3
             }, {
               label: 'Tendencia (SMA3)',
               data: sma(importesC, 3),
-              borderColor: '#0a58ca',
+              borderColor: '#2a9f8a',
               backgroundColor: 'transparent',
               borderDash: [6, 4],
               spanGaps: false,
@@ -275,15 +275,15 @@
             datasets: [{
               label: 'Precio/L (€)',
               data: preciosC,
-              borderColor: '#fd7e14',
-              backgroundColor: 'rgba(253,126,20,0.15)',
+              borderColor: '#ffbd68',
+              backgroundColor: 'rgba(255,189,104,0.15)',
               tension: 0.25,
               fill: true,
               pointRadius: 3
             }, {
               label: 'Tendencia (SMA3)',
               data: sma(preciosC, 3),
-              borderColor: '#cc5c00',
+              borderColor: '#d58c3f',
               backgroundColor: 'transparent',
               borderDash: [6, 4],
               spanGaps: false,
@@ -312,15 +312,15 @@
             datasets: [{
               label: 'Consumo (L/100km)',
               data: consumosC,
-              borderColor: '#6f42c1',
-              backgroundColor: 'rgba(111,66,193,0.15)',
+              borderColor: '#73a8ff',
+              backgroundColor: 'rgba(115,168,255,0.15)',
               tension: 0.25,
               fill: true,
               pointRadius: 3
             }, {
               label: 'Tendencia (SMA3)',
               data: sma(consumosC, 3),
-              borderColor: '#563d7c',
+              borderColor: '#4d78c0',
               backgroundColor: 'transparent',
               borderDash: [6, 4],
               spanGaps: false,
@@ -353,14 +353,14 @@
             datasets: [{
               label: 'Litros',
               data: litrosC,
-              backgroundColor: 'rgba(25,135,84,0.3)',
-              borderColor: '#198754',
+              backgroundColor: 'rgba(91,214,188,0.3)',
+              borderColor: '#5bd6bc',
               borderWidth: 1
             }, {
               type: 'line',
               label: 'Tendencia (SMA3)',
               data: sma(litrosC, 3),
-              borderColor: '#146c43',
+              borderColor: '#2a9f8a',
               backgroundColor: 'transparent',
               borderDash: [6, 4],
               spanGaps: false,
@@ -436,8 +436,8 @@
             datasets: [{
               label: 'Gasto mensual (€)',
               data: totales,
-              backgroundColor: 'rgba(13,110,253,0.25)',
-              borderColor: '#0d6efd',
+              backgroundColor: 'rgba(91,214,188,0.25)',
+              borderColor: '#5bd6bc',
               borderWidth: 1,
               barPercentage: 0.6,
               categoryPercentage: 0.7

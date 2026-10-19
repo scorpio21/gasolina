@@ -1,6 +1,10 @@
 <?php
 $base = isset($BASE_URL) ? $BASE_URL : '.';
-$homeUrl = 'https://gasolina.xo.je/';
+$homeUrl = $base . '/index.php';
+$currentPage = basename((string)($_SERVER['PHP_SELF'] ?? ''));
+$navActive = static function (string $page) use ($currentPage): string {
+  return $currentPage === $page ? ' active' : '';
+};
 // Si llega un cambio de vehículo vía GET, lo aplicamos a la sesión
 if (isset($_GET['vehiculo'])) {
   $vid = is_numeric($_GET['vehiculo']) ? (int)$_GET['vehiculo'] : null;
@@ -18,9 +22,9 @@ foreach ($vehiculos as $v) {
   }
 }
 ?>
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar">
   <div class="container">
-    <a class="navbar-brand" href="<?php echo $base; ?>/index.php">⛽ Control Gasolina</a>
+    <a class="navbar-brand" href="<?php echo $base; ?>/index.php"><span class="brand-mark" aria-hidden="true">⛽</span>Control Gasolina</a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu"
       aria-controls="menu" aria-expanded="false" aria-label="Menú">
       <span class="navbar-toggler-icon"></span>
@@ -28,7 +32,7 @@ foreach ($vehiculos as $v) {
     <div class="collapse navbar-collapse" id="menu">
       <ul class="navbar-nav ms-auto align-items-lg-center gap-2">
         <li class="nav-item">
-          <a class="nav-link" href="<?php echo e($homeUrl); ?>">🏠 Inicio</a>
+          <a class="nav-link<?php echo $navActive('index.php'); ?>" href="<?php echo e($homeUrl); ?>">🏠 Inicio</a>
         </li>
         <?php if (!empty($vehiculos)): ?>
         <li class="nav-item dropdown">
@@ -66,16 +70,16 @@ foreach ($vehiculos as $v) {
         </li>
         <?php endif; ?>
         <li class="nav-item">
-          <a class="nav-link" href="<?php echo $base; ?>/pages/vehiculos.php">🚘 Vehículos</a>
+          <a class="nav-link<?php echo $navActive('vehiculos.php'); ?>" href="<?php echo $base; ?>/pages/vehiculos.php">🚘 Vehículos</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="<?php echo $base; ?>/pages/mantenimientos.php">🛠️ Mantenimientos</a>
+          <a class="nav-link<?php echo $navActive('mantenimientos.php'); ?>" href="<?php echo $base; ?>/pages/mantenimientos.php">🛠️ Mantenimientos</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="<?php echo $base; ?>/pages/formulario.php">➕ Nuevo Repostaje</a>
+          <a class="nav-link<?php echo $navActive('formulario.php'); ?>" href="<?php echo $base; ?>/pages/formulario.php">➕ Nuevo Repostaje</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="<?php echo $base; ?>/pages/listar.php">📊 Historial</a>
+          <a class="nav-link<?php echo $navActive('listar.php'); ?>" href="<?php echo $base; ?>/pages/listar.php">📊 Historial</a>
         </li>
         <li class="nav-item">
           <button id="toggleTema" type="button" class="btn btn-outline-light btn-sm" title="Cambiar tema">

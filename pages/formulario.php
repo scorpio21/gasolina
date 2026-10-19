@@ -6,7 +6,8 @@ require_auth();
 $conexion = getDb();
 $BASE_URL = '..';
 $vehiculoId = getActiveVehiculoId();
-$useVeh = hasColumn('consumos','vehiculo_id') && $vehiculoId !== null;
+$hasVehiculoColumn = hasColumn('consumos', 'vehiculo_id');
+$useVeh = $hasVehiculoColumn && $vehiculoId !== null;
 $useLleno = hasColumn('consumos','lleno');
 $errores = [];
 $old = [
@@ -18,6 +19,11 @@ $old = [
     'importe_total' => '',
     'lleno' => '1'
 ];
+
+// No permitir nuevos repostajes sin vehículo cuando la base admite esa relación.
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasVehiculoColumn && $vehiculoId === null) {
+    $errores['vehiculo_id'] = 'Selecciona un vehículo en el menú antes de guardar el repostaje.';
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     verify_csrf_token();
@@ -156,7 +162,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   <meta charset="UTF-8">
   <title>Nuevo Repostaje</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  <link href="../css/main.css" rel="stylesheet">
+  <link href="../css/main.css?v=20261020" rel="stylesheet">
   <!-- Favicon (escritorio) -->
   <link rel="icon" type="image/x-icon" href="/img/gasolina.ico">
   <!-- Apple Touch Icons (iOS - pantalla de inicio) -->
@@ -174,8 +180,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </head>
 <body>
 <?php include __DIR__ . "/../includes/navbar.php"; ?>
-<div class="container py-4">
-  <h2 class="mb-4">➕ Nuevo Repostaje</h2>
+<main class="container page-shell">
+  <div class="page-heading">
+    <div><div class="dashboard-kicker mb-1">Registro</div><h2>Nuevo repostaje</h2><p>Guarda los datos del ticket y deja que el sistema calcule el resto.</p></div>
+    <a class="btn btn-outline-primary" href="listar.php">Ver historial</a>
+  </div>
   <?php if (!empty($errores)): ?>
     <div class="alert alert-danger">
       <strong>Revisa los campos:</strong>
@@ -233,9 +242,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </div>
     <button type="submit" class="btn btn-primary">Guardar</button>
   </form>
-</div>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-<script src="../js/main.js?v=20250902"></script>
+<script src="../js/main.js?v=20261020"></script>
 <script>
 (function() {
   'use strict';

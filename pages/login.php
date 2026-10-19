@@ -45,13 +45,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Acceso - Control Gasolina</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  <link href="../css/main.css" rel="stylesheet">
+  <link href="../css/main.css?v=20261020" rel="stylesheet">
 </head>
-<body class="bg-light">
-<main class="container py-5" style="max-width: 30rem;">
-  <div class="card shadow-sm">
+<body>
+<main class="container login-shell">
+  <div class="card login-card shadow-sm">
     <div class="card-body p-4">
-      <h1 class="h3 mb-4">Acceso</h1>
+      <div class="brand-mark" aria-hidden="true">⛽</div>
+      <div class="dashboard-kicker mb-1">Control Gasolina</div>
+      <h1 class="mb-4">Acceso</h1>
       <?php if ($error !== ''): ?><div class="alert alert-danger"><?php echo e($error); ?></div><?php endif; ?>
       <form method="post">
         <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">

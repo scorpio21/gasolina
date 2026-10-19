@@ -71,7 +71,7 @@ if ($resMes) {
   <meta charset="UTF-8">
   <title>Historial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  <link href="../css/main.css" rel="stylesheet">
+  <link href="../css/main.css?v=20261020" rel="stylesheet">
   <!-- Favicon (escritorio) -->
   <link rel="icon" type="image/x-icon" href="/img/gasolina.ico">
   <!-- Apple Touch Icons (iOS - pantalla de inicio) -->
@@ -89,8 +89,11 @@ if ($resMes) {
 </head>
 <body>
 <?php include __DIR__ . "/../includes/navbar.php"; ?>
-<div class="container py-4">
-  <h2 class="mb-4">📊 Historial de Repostajes</h2>
+<main class="container page-shell">
+  <div class="page-heading">
+    <div><div class="dashboard-kicker mb-1">Seguimiento</div><h2>Historial de repostajes</h2><p>Consulta el coste y el rendimiento de cada trayecto.</p></div>
+    <a class="btn btn-primary" href="formulario.php">+ Nuevo repostaje</a>
+  </div>
   <?php
     // KPIs básicos para el histórico (€/km y €/mes promedio)
     $eurKm = 0.0; $avgMes = 0.0;
@@ -277,7 +280,7 @@ if ($resMes) {
     </div>
   </div>
   <?php endif; ?>
-</div>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 <!-- Librería de gráficos -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js" integrity="sha384-9MhbyIRcBVQiiC7FSd7T38oJNj2Zh+EfxS7/vjhBi4OOT78NlHSnzM31EZRWR1LZ" crossorigin="anonymous"></script>
@@ -286,7 +289,7 @@ if ($resMes) {
 <!-- Exportación a PDF (cliente) -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
-<script src="../js/main.js?v=20250902"></script>
+<script src="../js/main.js?v=20261020"></script>
 <script src="../js/export-pdf.js"></script>
 </body>
 </html>

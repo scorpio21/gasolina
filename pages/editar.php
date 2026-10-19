@@ -141,7 +141,7 @@ if (!$registro) {
   <meta charset="UTF-8">
   <title>Editar Repostaje</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  <link href="../css/main.css" rel="stylesheet">
+  <link href="../css/main.css?v=20261020" rel="stylesheet">
   <!-- Favicon (escritorio) -->
   <link rel="icon" type="image/x-icon" href="/img/gasolina.ico">
   <!-- Apple Touch Icons (iOS - pantalla de inicio) -->
@@ -157,10 +157,13 @@ if (!$registro) {
   <meta name="apple-mobile-web-app-title" content="Gasolina">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 </head>
-<body class="bg-light">
+<body>
 <?php include __DIR__ . "/../includes/navbar.php"; ?>
-<div class="container py-4">
-  <h2 class="mb-4">✏️ Editar Repostaje</h2>
+<main class="container page-shell">
+  <div class="page-heading">
+    <div><div class="dashboard-kicker mb-1">Corrección</div><h2>Editar repostaje</h2><p>Actualiza el ticket sin perder el historial del vehículo.</p></div>
+    <a class="btn btn-outline-primary" href="listar.php">Volver al historial</a>
+  </div>
 
   <?php if (!empty($errores)): ?>
     <div class="alert alert-danger">
@@ -212,8 +215,8 @@ if (!$registro) {
     <input type="hidden" name="accion" value="eliminar">
     <button type="submit" class="btn btn-outline-danger">🗑️ Eliminar registro</button>
   </form>
-</div>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-<script src="../js/main.js"></script>
+<script src="../js/main.js?v=20261020"></script>
 </body>
 </html>

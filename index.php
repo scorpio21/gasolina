@@ -75,7 +75,7 @@ if ($ultimos) {
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Dashboard - Control Gasolina</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-  <link href="css/main.css?v=20250902" rel="stylesheet">
+  <link href="css/main.css?v=20261020" rel="stylesheet">
   <!-- Favicon (escritorio) -->
   <link rel="icon" type="image/x-icon" href="/img/gasolina.ico">
   <!-- Apple Touch Icons (iOS - pantalla de inicio) -->
@@ -94,7 +94,7 @@ if ($ultimos) {
 <body>
 <?php include __DIR__ . "/includes/navbar.php"; ?>
 
-<div class="container py-4">
+<main class="container dashboard-shell">
   <?php
     // Resolver src de la imagen (absoluta o relativa)
     $vehiculoImgSrc = './img/audi.png';
@@ -107,8 +107,11 @@ if ($ultimos) {
       }
     }
   ?>
+  <div class="dashboard-kicker">Panel de ruta</div>
+  <h1 class="dashboard-title mb-3">Tus kilómetros, <span style="color:var(--gas-teal)">bajo control.</span></h1>
+  <p class="dashboard-subtitle mb-4">Una lectura clara de cada repostaje para saber cuánto cuesta realmente moverte.</p>
   <?php if (!empty($vehiculos)): ?>
-  <div class="vehiculo-hero text-center mb-3">
+  <div class="vehicle-hero">
     <img src="<?php echo e($vehiculoImgSrc); ?>" alt="<?php echo e($vehiculoNombre); ?>" class="vehiculo-foto" />
     <div class="vehiculo-nombre mt-2 fw-semibold"><?php echo e(trim($vehiculoNombre) !== '' ? $vehiculoNombre : 'Vehículo'); ?></div>
   </div>
@@ -221,11 +224,13 @@ if ($ultimos) {
     </div>
   </div>
   <?php endif; ?>
-  <h1 class="mb-4 text-center">📊 Resumen de Consumo</h1>
+  <div class="d-flex align-items-end justify-content-between gap-3 mb-3">
+    <div><div class="dashboard-kicker mb-1">Resumen</div><h2 class="mb-0">Consumo y gasto</h2></div>
+  </div>
 
   <div class="row g-4 mb-4">
     <div class="col-md-4">
-      <div class="card text-center shadow-sm">
+      <div class="card dashboard-metric text-center shadow-sm">
         <div class="card-body">
           <h5 class="card-title">💶 Gasto Total</h5>
           <p class="fs-4 fw-bold">
@@ -235,7 +240,7 @@ if ($ultimos) {
       </div>
     </div>
     <div class="col-md-4">
-      <div class="card text-center shadow-sm">
+      <div class="card dashboard-metric metric-amber text-center shadow-sm">
         <div class="card-body">
           <h5 class="card-title">🚗 Km Totales</h5>
           <p class="fs-4 fw-bold">
@@ -245,7 +250,7 @@ if ($ultimos) {
       </div>
     </div>
     <div class="col-md-4">
-      <div class="card text-center shadow-sm">
+      <div class="card dashboard-metric metric-blue text-center shadow-sm">
         <div class="card-body">
           <h5 class="card-title">⛽ Consumo Medio</h5>
           <p class="fs-4 fw-bold">
@@ -258,7 +263,7 @@ if ($ultimos) {
 
   <div class="row g-4 mb-4">
     <div class="col-md-6">
-      <div class="card text-center shadow-sm">
+      <div class="card dashboard-metric text-center shadow-sm">
         <div class="card-body">
           <h5 class="card-title">€/km</h5>
           <p class="fs-4 fw-bold"><?php echo e(number_format($eurKm, 3)); ?> €/km</p>
@@ -267,7 +272,7 @@ if ($ultimos) {
       </div>
     </div>
     <div class="col-md-6">
-      <div class="card text-center shadow-sm">
+      <div class="card dashboard-metric metric-amber text-center shadow-sm">
         <div class="card-body">
           <h5 class="card-title">€/mes (promedio)</h5>
           <p class="fs-4 fw-bold"><?php echo e(number_format($avgMes, 2)); ?> €/mes</p>
@@ -318,9 +323,9 @@ if ($ultimos) {
   </div>
 
   
-</div>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-<script src="js/main.js?v=20250902"></script>
+<script src="js/main.js?v=20261020"></script>
 </body>
 </html>

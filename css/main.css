@@ -1,10 +1,204 @@
-/* Estilos generales del proyecto Gasolina */
-/* Mantener CSS separado y minimalista; extender según sea necesario. */
+/* Gasolina · dirección visual "ruta nocturna" */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+:root {
+  --gas-bg: #0b1118;
+  --gas-surface: #121c26;
+  --gas-surface-2: #172430;
+  --gas-line: rgba(214, 231, 239, .12);
+  --gas-text: #edf5f7;
+  --gas-muted: #91a6b0;
+  --gas-teal: #5bd6bc;
+  --gas-amber: #ffbd68;
+  --gas-blue: #73a8ff;
+  --gas-danger: #ff8d8d;
+  --gas-radius: 18px;
+}
+
+* { box-sizing: border-box; }
 
 body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% -10%, rgba(91, 214, 188, .10), transparent 32rem),
+    radial-gradient(circle at 92% 0%, rgba(115, 168, 255, .08), transparent 28rem),
+    var(--gas-bg);
+  color: var(--gas-text);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  letter-spacing: .005em;
 }
+
+h1, h2, h3, h4, h5, .navbar-brand { font-family: 'Space Grotesk', sans-serif; }
+h1 { letter-spacing: -.045em; }
+a { color: var(--gas-teal); }
+a:hover { color: #a7f0df; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid rgba(255, 189, 104, .75);
+  outline-offset: 3px;
+}
+
+.container { max-width: 1240px; }
+
+.app-navbar {
+  background: rgba(11, 17, 24, .82) !important;
+  border-bottom: 1px solid var(--gas-line);
+  backdrop-filter: blur(18px);
+  margin-bottom: 0 !important;
+  padding: .9rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.app-navbar .container { gap: 1rem; }
+.app-navbar .navbar-brand {
+  color: var(--gas-text);
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.brand-mark {
+  align-items: center;
+  background: linear-gradient(135deg, var(--gas-amber), #ef8c45);
+  border-radius: 11px;
+  color: #18202a;
+  display: inline-flex;
+  height: 33px;
+  justify-content: center;
+  margin-right: .55rem;
+  width: 33px;
+}
+.app-navbar .nav-link {
+  border-radius: 10px;
+  color: var(--gas-muted) !important;
+  font-size: .88rem;
+  padding: .55rem .72rem !important;
+  transition: background .2s ease, color .2s ease;
+}
+.app-navbar .nav-link:hover,
+.app-navbar .nav-link:focus { background: rgba(91, 214, 188, .10); color: var(--gas-text) !important; }
+.app-navbar .nav-link.active { background: rgba(91, 214, 188, .14); color: var(--gas-text) !important; box-shadow: inset 0 -2px 0 var(--gas-teal); }
+.app-navbar .dropdown-menu {
+  background: var(--gas-surface-2);
+  border: 1px solid var(--gas-line);
+  border-radius: 12px;
+  box-shadow: 0 18px 45px rgba(0,0,0,.35);
+}
+.app-navbar .dropdown-item { color: var(--gas-text); }
+.app-navbar .dropdown-item:hover,
+.app-navbar .dropdown-item.active { background: rgba(91, 214, 188, .15); color: var(--gas-text); }
+
+.dashboard-shell { padding-top: 2.4rem; padding-bottom: 4rem; }
+.page-shell { padding-top: 2.2rem; padding-bottom: 4rem; }
+.login-shell { align-items: center; display: flex; min-height: 100vh; padding-bottom: 4rem; padding-top: 4rem; }
+.login-card { margin: 0 auto; max-width: 30rem; width: 100%; }
+.login-card .brand-mark { height: 42px; margin-bottom: 1.2rem; width: 42px; }
+.login-card h1 { font-size: 2rem; letter-spacing: -.04em; }
+.page-heading { align-items: end; display: flex; justify-content: space-between; margin-bottom: 1.6rem; }
+.page-heading h1, .page-heading h2 { font-size: clamp(1.9rem, 3vw, 2.8rem); letter-spacing: -.04em; margin: 0; }
+.page-heading p { color: var(--gas-muted); margin: .45rem 0 0; }
+.dashboard-kicker {
+  color: var(--gas-amber);
+  font-size: .76rem;
+  font-weight: 700;
+  letter-spacing: .12em;
+  margin-bottom: .55rem;
+  text-transform: uppercase;
+}
+.dashboard-title { font-size: clamp(2.2rem, 4vw, 4.3rem); line-height: .98; max-width: 720px; }
+.dashboard-subtitle { color: var(--gas-muted); max-width: 600px; }
+
+.vehicle-hero {
+  align-items: center;
+  background: linear-gradient(120deg, rgba(22, 36, 48, .96), rgba(18, 28, 38, .82));
+  border: 1px solid var(--gas-line);
+  border-radius: var(--gas-radius);
+  display: flex;
+  gap: 1.35rem;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  min-height: 190px;
+  overflow: hidden;
+  padding: 1.35rem 1.5rem 1.35rem 1.8rem;
+  position: relative;
+}
+.vehicle-hero::after {
+  background: linear-gradient(90deg, transparent, rgba(91, 214, 188, .18));
+  content: '';
+  inset: 0 0 0 58%;
+  pointer-events: none;
+  position: absolute;
+}
+.vehicle-hero .vehiculo-foto { filter: drop-shadow(0 18px 22px rgba(0,0,0,.36)); max-width: 270px; position: relative; z-index: 1; }
+.vehicle-hero .vehiculo-nombre { color: var(--gas-text); font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.4rem, 3vw, 2.3rem); font-weight: 600; margin: 0 !important; position: relative; z-index: 1; }
+.vehicle-hero .vehiculo-nombre::before { color: var(--gas-teal); content: 'Vehículo activo'; display: block; font-family: 'DM Sans', sans-serif; font-size: .75rem; font-weight: 700; letter-spacing: .11em; margin-bottom: .55rem; text-transform: uppercase; }
+
+.card, .table-responsive, section#historial-export {
+  background: rgba(18, 28, 38, .88) !important;
+  border: 1px solid var(--gas-line) !important;
+  border-radius: var(--gas-radius) !important;
+  color: var(--gas-text);
+}
+.card { box-shadow: 0 16px 38px rgba(0,0,0,.14) !important; }
+.card-header { background: transparent !important; border-bottom: 1px solid var(--gas-line) !important; color: var(--gas-text); font-family: 'Space Grotesk', sans-serif; font-weight: 600; padding: 1rem 1.2rem; }
+.alert { border: 1px solid transparent; border-radius: 13px; }
+.alert-success { background: rgba(91, 214, 188, .12); border-color: rgba(91, 214, 188, .3); color: #b7f4e7; }
+.alert-danger { background: rgba(255, 141, 141, .12); border-color: rgba(255, 141, 141, .3); color: #ffc5c5; }
+.form-label { color: var(--gas-text); font-weight: 600; }
+.form-text { color: var(--gas-muted); }
+.form-check-input { background-color: #0f1821; border-color: var(--gas-line); }
+.form-check-input:checked { background-color: var(--gas-teal); border-color: var(--gas-teal); }
+.navbar-toggler { border-color: var(--gas-line); }
+.navbar-toggler:focus { box-shadow: 0 0 0 .2rem rgba(91,214,188,.16); }
+.pagination .page-link { background: var(--gas-surface-2); border-color: var(--gas-line); color: var(--gas-text); }
+.pagination .page-item.active .page-link, .pagination .page-link:hover { background: rgba(91,214,188,.16); border-color: rgba(91,214,188,.35); color: var(--gas-text); }
+.export-header { border-bottom: 1px solid var(--gas-line); padding-bottom: .8rem; }
+.chart-container { background: rgba(9, 15, 22, .24); border-radius: 12px; padding: .5rem; }
+.card-title { color: var(--gas-muted); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+.card .fs-4 { color: var(--gas-text); font-family: 'Space Grotesk', sans-serif; }
+.card .text-muted, .text-muted { color: var(--gas-muted) !important; }
+.dashboard-metric { min-height: 148px; position: relative; }
+.dashboard-metric::before { background: var(--gas-teal); border-radius: 4px; content: ''; height: 4px; left: 1.25rem; position: absolute; top: 0; width: 34px; }
+.dashboard-metric.metric-amber::before { background: var(--gas-amber); }
+.dashboard-metric.metric-blue::before { background: var(--gas-blue); }
+
+.table-responsive { overflow-x: auto; overflow-y: hidden; }
+.vehicle-actions { align-items: center; display: flex; flex-wrap: wrap; gap: .45rem; min-width: 224px; }
+.vehicle-actions .btn { white-space: nowrap; }
+.table { --bs-table-bg: transparent; --bs-table-color: var(--gas-text); margin-bottom: 0; }
+.table thead th, .table-dark th { background: rgba(91, 214, 188, .09) !important; border-bottom: 1px solid var(--gas-line) !important; color: var(--gas-text) !important; font-size: .75rem; letter-spacing: .05em; text-transform: uppercase; }
+.table td, .table th { border-color: var(--gas-line) !important; padding: .9rem .85rem; }
+.table-striped>tbody>tr:nth-of-type(odd)>* { --bs-table-accent-bg: rgba(255,255,255,.025); color: inherit; }
+.table tbody tr:hover { background: rgba(91, 214, 188, .06); }
+.btn-primary, .btn-primary:visited { background: var(--gas-teal); border-color: var(--gas-teal); color: #10201f !important; font-weight: 700; }
+.btn-primary:hover, .btn-primary:focus, .btn-primary:active { background: #8ae7d2; border-color: #8ae7d2; color: #10201f !important; }
+.btn-outline-primary { border-color: var(--gas-teal); color: var(--gas-teal); }
+.btn-outline-primary:hover { background: var(--gas-teal); border-color: var(--gas-teal); color: #10201f; }
+.form-control, .form-select { background-color: #0f1821; border-color: var(--gas-line); color: var(--gas-text); }
+.form-control:focus, .form-select:focus { background-color: #0f1821; border-color: var(--gas-teal); box-shadow: 0 0 0 .2rem rgba(91,214,188,.15); color: var(--gas-text); }
+
+@media (max-width: 767.98px) {
+  .dashboard-shell { padding-top: 1.5rem; }
+  .vehicle-hero { align-items: flex-start; flex-direction: column; min-height: 230px; padding: 1.2rem; }
+  .vehicle-hero .vehiculo-foto { align-self: flex-end; margin-top: -1.5rem; max-width: 210px; }
+  .vehicle-hero .vehiculo-nombre { margin-top: -1rem !important; }
+  .app-navbar .navbar-collapse { border-top: 1px solid var(--gas-line); margin-top: .8rem; padding-top: .8rem; }
+  .page-heading { align-items: flex-start; flex-direction: column; gap: .7rem; }
+  .vehicle-actions { min-width: 210px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+@media print {
+  body { background: #fff !important; color: #111 !important; }
+  .app-navbar, .btn, form, .pagination, #btnExportPDF, .dashboard-kicker { display: none !important; }
+  .page-shell, .dashboard-shell { padding: 0 !important; }
+  .card, .table-responsive, section#historial-export { background: #fff !important; border: 1px solid #bbb !important; box-shadow: none !important; color: #111 !important; }
+  .table { --bs-table-color: #111; }
+}
+
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 .table th {
   white-space: nowrap;
