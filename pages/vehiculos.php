@@ -140,7 +140,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
           $errores[] = 'El vehículo se guardó, pero no se pudo actualizar el vehículo activo.';
         }
       }
-      if (empty($errores)) { header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=creado'); exit; }
+      if (empty($errores)) {
+        if ($cols['activo'] && $activo) { setActiveVehiculoId((int)$nuevoId); }
+        header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=creado'); exit;
+      }
     } else {
       // UPDATE
       $set = ['marca=?','modelo=?'];
@@ -167,7 +170,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
       if (empty($errores) && $cols['activo'] && $activo && !$db->query('UPDATE vehiculos SET activo=0 WHERE id<>'.(int)$id)) {
         $errores[] = 'El vehículo se actualizó, pero no se pudo actualizar el vehículo activo.';
       }
-      if (empty($errores)) { header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=actualizado'); exit; }
+      if (empty($errores)) {
+        if ($cols['activo'] && $activo) {
+          setActiveVehiculoId($id);
+        } elseif (getActiveVehiculoId() === $id) {
+          setActiveVehiculoId(null);
+        }
+        header('Location: '.$BASE_URL.'/pages/vehiculos.php?ok=actualizado'); exit;
+      }
     }
   }
 }

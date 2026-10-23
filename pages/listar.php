@@ -5,8 +5,10 @@ require_auth();
 
 $conexion = getDb();
 $BASE_URL = '..';
+$hasVehiculoColumn = hasColumn('consumos','vehiculo_id');
 $vehiculoId = getActiveVehiculoId();
-$useVeh = hasColumn('consumos','vehiculo_id') && $vehiculoId !== null;
+$useVeh = $hasVehiculoColumn && $vehiculoId !== null;
+$vehicleFilterUnavailable = hasTable('vehiculos') && !$hasVehiculoColumn;
 $hasGasolinera = hasColumn('consumos', 'gasolinera');
 
 // Filtros del historial
@@ -15,6 +17,9 @@ $mes = isset($_GET['mes']) && preg_match('/^\d{4}-\d{2}$/', (string)$_GET['mes']
 $gasolinera = $hasGasolinera ? trim((string)($_GET['gasolinera'] ?? '')) : '';
 $where = [];
 if ($useVeh) { $where[] = 'vehiculo_id='.(int)$vehiculoId; }
+// Si existe gestión de vehículos pero falta la relación, no mostrar datos
+// mezclados: es preferible pedir la migración a enseñar un historial ambiguo.
+if ($vehicleFilterUnavailable) { $where[] = '1=0'; }
 if ($mes !== '') { $where[] = "DATE_FORMAT(fecha,'%Y-%m')='".$conexion->real_escape_string($mes)."'"; }
 if ($gasolinera !== '') {
   $where[] = "gasolinera LIKE '%".$conexion->real_escape_string($gasolinera)."%'";
@@ -170,6 +175,13 @@ if ($resMes) {
   <?php if (isset($_GET['eliminado']) && $_GET['eliminado'] === '1'): ?>
     <div class="alert alert-success">Registro eliminado correctamente.</div>
   <?php endif; ?>
+  <?php if ($vehicleFilterUnavailable): ?>
+    <div class="alert alert-warning">
+      No se puede filtrar el historial por vehículo porque falta la columna
+      <code>consumos.vehiculo_id</code>. Ejecuta la migración de vehículos antes
+      de introducir o consultar repostajes.
+    </div>
+  <?php endif; ?>
   <section id="historial-export" class="bg-white p-3 rounded border">
     <div class="export-header d-flex align-items-center justify-content-between mb-3">
       <div class="d-flex align-items-center gap-2">
@@ -313,6 +325,15 @@ if ($resMes) {
       </div>
     </div>
   </div>
+  <div class="row g-4 mt-1">
+    <div class="col-lg-6 mx-auto">
+      <div class="card p-3 shadow-sm">
+        <h5 class="text-center">Distribución del gasto</h5>
+        <div class="chart-container"><canvas id="graficoDistribucion"></canvas></div>
+        <p class="text-muted small text-center mb-0">Importe de cada repostaje del rango seleccionado.</p>
+      </div>
+    </div>
+  </div>
   <?php endif; ?>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
@@ -323,7 +344,7 @@ if ($resMes) {
 <!-- Exportación a PDF (cliente) -->
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" integrity="sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js" integrity="sha384-JcnsjUPPylna1s1fvi1u12X5qjY5OL56iySh75FdtrwhO/SWXgMjoVqcKyIIWOLk" crossorigin="anonymous"></script>
-<script src="../js/main.js?v=20261020"></script>
+<script src="../js/main.js?v=20261023-6"></script>
 <script src="../js/export-pdf.js"></script>
 </body>
 </html>

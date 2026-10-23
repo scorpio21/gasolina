@@ -175,6 +175,20 @@ function getActiveVehiculoId(): ?int {
     if (isset($_SESSION['vehiculo_id']) && is_numeric($_SESSION['vehiculo_id'])) {
         return (int) $_SESSION['vehiculo_id'];
     }
+
+    // Si la sesión es nueva o ha caducado, recuperamos el vehículo marcado
+    // como activo en la base de datos. Así las páginas no caen al historial
+    // global y no mezclan repostajes de vehículos distintos.
+    if (hasTable('vehiculos') && hasColumn('vehiculos', 'activo')) {
+        $db = getDb();
+        $res = $db->query('SELECT id FROM vehiculos WHERE activo=1 ORDER BY id LIMIT 1');
+        if ($res && ($row = $res->fetch_assoc()) && isset($row['id'])) {
+            $id = (int) $row['id'];
+            $_SESSION['vehiculo_id'] = $id;
+            return $id;
+        }
+    }
+
     return null;
 }
 

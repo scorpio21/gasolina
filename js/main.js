@@ -27,7 +27,7 @@
       // Actualizar defaults para futuros charts
       Chart.defaults.color = colorTexto;
     } catch(_) {}
-    const ids = ['graficoGasto','graficoPrecio','graficoConsumo','graficoLitros'];
+    const ids = ['graficoGasto','graficoPrecio','graficoConsumo','graficoLitros','graficoDistribucion'];
     ids.forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -376,6 +376,99 @@
         });
       }
 
+      // Gráfica circular: distribución del gasto por repostaje.
+      const ctxDistribucion = document.getElementById('graficoDistribucion');
+      if (ctxDistribucion && ctxDistribucion.getContext) {
+        const colores = [
+          '#5bd6bc', '#73a8ff', '#ffbd68', '#c792ea', '#f28f8f',
+          '#9bd46e', '#f7d774', '#7dd3c7', '#b8a1ff', '#ff9f68'
+        ];
+        const pieCallouts = {
+          id: 'pieCallouts',
+          afterDatasetsDraw(chart) {
+            const meta = chart.getDatasetMeta(0);
+            if (!meta || !meta.data || !meta.data.length || typeof meta.data[0].startAngle !== 'number') return;
+            const values = chart.data.datasets[0].data.map(Number);
+            const total = values.reduce((sum, value) => sum + (Number.isFinite(value) ? value : 0), 0);
+            if (!total) return;
+            const context = chart.ctx;
+            context.save();
+            context.font = '600 12px Space Grotesk, sans-serif';
+            context.textBaseline = 'middle';
+            meta.data.forEach((arc, index) => {
+              const angle = (arc.startAngle + arc.endAngle) / 2;
+              const percentage = (values[index] / total) * 100;
+              const side = Math.cos(angle) >= 0 ? 1 : -1;
+              const startX = arc.x + Math.cos(angle) * arc.outerRadius * .78;
+              const startY = arc.y + Math.sin(angle) * arc.outerRadius * .78;
+              const elbowX = arc.x + Math.cos(angle) * (arc.outerRadius + 18);
+              const elbowY = arc.y + Math.sin(angle) * (arc.outerRadius + 18);
+              const labelX = elbowX + side * 34;
+              const label = `${percentage.toFixed(0)}%`;
+              const boxWidth = context.measureText(label).width + 18;
+              const boxHeight = 24;
+              const topLimit = chart.chartArea.top + boxHeight / 2 + 4;
+              const bottomLimit = chart.chartArea.bottom - boxHeight / 2 - 4;
+              const labelY = Math.max(topLimit, Math.min(bottomLimit, elbowY));
+              const boxX = side > 0 ? labelX : labelX - boxWidth;
+              const boxY = labelY - boxHeight / 2;
+
+              context.strokeStyle = colores[index % colores.length];
+              context.lineWidth = 1.5;
+              context.beginPath();
+              context.moveTo(startX, startY);
+              context.lineTo(elbowX, elbowY);
+              context.lineTo(labelX, labelY);
+              context.stroke();
+
+              context.fillStyle = 'rgba(10, 16, 22, .94)';
+              context.lineWidth = 1;
+              context.beginPath();
+              context.rect(boxX, boxY, boxWidth, boxHeight);
+              context.fill();
+              context.stroke();
+              context.fillStyle = '#f4f8fb';
+              context.textAlign = 'center';
+              context.fillText(label, boxX + boxWidth / 2, labelY);
+            });
+            context.restore();
+          }
+        };
+        createChart(ctxDistribucion, {
+          type: 'pie',
+          plugins: [pieCallouts],
+          data: {
+            labels: fechasC,
+            datasets: [{
+              label: 'Gasto (€)',
+              data: importesC,
+              backgroundColor: importesC.map((_, i) => colores[i % colores.length]),
+              borderColor: '#1c2329',
+              borderWidth: 2,
+              hoverOffset: 8,
+              offset: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: { padding: { top: 16, right: 50, bottom: 12, left: 50 } },
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: { usePointStyle: true, padding: 14 }
+              },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ` ${ctx.label}: ${Number(ctx.raw || 0).toFixed(2)} €`
+                }
+              }
+            }
+          }
+        });
+        markChartReady(ctxDistribucion, 'Distribución');
+      }
+
       // Toggle de tendencia (SMA3)
       const toggle = document.getElementById('toggleTendencia');
       if (toggle) {
@@ -425,12 +518,11 @@
           if ((!grafMensual.width || grafMensual.width === 0)) { grafMensual.width = 600; }
         } catch(_) {}
         const ctx = grafMensual.getContext('2d');
-        // Registrar plugin de datalabels si existe
-        if (window.ChartDataLabels && Chart && Chart.register) {
-          try { Chart.register(window.ChartDataLabels); } catch(_) {}
-        }
         new Chart(ctx, {
           type: 'bar',
+          // Aplicar las etiquetas solo a esta gráfica; registrarlo globalmente
+          // rompe las gráficas que no tienen configuración de datalabels.
+          plugins: window.ChartDataLabels ? [window.ChartDataLabels] : [],
           data: {
             labels,
             datasets: [{
