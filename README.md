@@ -20,7 +20,7 @@ Aplicación web para gestionar repostajes, vehículos y mantenimiento, con indic
 
 1. Clona el repositorio dentro de `htdocs`.
 2. Crea la base de datos e importa el esquema disponible en `sql/`.
-3. Configura las credenciales en `app/env.php` o mediante variables de entorno.
+3. Copia `app/env.example.php` como `app/env.php` y configura las credenciales, o utiliza variables de entorno.
 4. Abre `http://localhost/Gasolina/`.
 
 Ejemplo de configuración local:
@@ -32,7 +32,7 @@ DB_PASS=
 DB_NAME=gasolina
 ```
 
-Nunca publiques `app/env.php`, `.env`, copias de bases de datos, logs ni archivos de diagnóstico.
+`app/env.php` y `.env` son configuraciones privadas: pueden existir en el servidor, pero nunca deben publicarse en GitHub. No subas copias de bases de datos, logs ni archivos de diagnóstico.
 
 ## Despliegue
 

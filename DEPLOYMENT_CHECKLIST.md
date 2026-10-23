@@ -5,7 +5,7 @@
 - [ ] Comprobar que la aplicación local carga correctamente.
 - [ ] Ejecutar `php -l` sobre todos los archivos PHP.
 - [ ] Hacer una copia de seguridad de la base de datos de producción.
-- [ ] Confirmar que `app/env.php` y `.env` no se subirán al repositorio ni al FTP.
+- [ ] Confirmar que `app/env.php` y `.env` no se subirán al repositorio; en el FTP solo debe quedar la configuración de producción necesaria.
 - [ ] Preparar `app/env.php` de producción con las credenciales de InfinityFree.
 - [ ] Configurar autenticación solo después de probarla localmente.
 
@@ -18,7 +18,7 @@
 
 ## Archivos que no se deben subir
 
-- `.env`
+- `.env` local o cualquier copia con credenciales distintas.
 - `app/env.php` local o cualquier copia con credenciales distintas.
 - `test/diagnostico.php`
 - Copias `.sql` con datos reales.
