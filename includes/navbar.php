@@ -5,11 +5,6 @@ $currentPage = basename((string)($_SERVER['PHP_SELF'] ?? ''));
 $navActive = static function (string $page) use ($currentPage): string {
   return $currentPage === $page ? ' active' : '';
 };
-// Si llega un cambio de vehículo vía GET, lo aplicamos a la sesión
-if (isset($_GET['vehiculo'])) {
-  $vid = is_numeric($_GET['vehiculo']) ? (int)$_GET['vehiculo'] : null;
-  if ($vid !== null) { setActiveVehiculoId($vid); }
-}
 $vehiculos = function_exists('getVehiculos') ? getVehiculos() : [];
 $vehiculoActivo = function_exists('getActiveVehiculoId') ? getActiveVehiculoId() : null;
 $vehiculoNombre = 'Vehículo';

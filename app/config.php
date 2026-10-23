@@ -4,21 +4,15 @@ declare(strict_types=1);
 // Sesión para preferencias (p.ej., vehiculo activo)
 if (session_status() !== PHP_SESSION_ACTIVE) {
     $https = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    // Evita sesiones fijadas y rechaza identificadores enviados por URL.
+    ini_set('session.use_only_cookies', '1');
+    ini_set('session.use_strict_mode', '1');
     session_set_cookie_params([
         'httponly' => true,
         'secure' => $https,
         'samesite' => 'Lax',
     ]);
     session_start();
-}
-
-// Si llega parámetro ?vehiculo=ID en la URL, actualizar la sesión cuanto antes
-if (isset($_GET['vehiculo'])) {
-    $vid = is_numeric($_GET['vehiculo']) ? (int)$_GET['vehiculo'] : null;
-    if ($vid !== null) {
-        // setActiveVehiculoId aún no está definido; lo haremos más abajo si no existe variable temporal
-        $_SESSION['vehiculo_id'] = $vid;
-    }
 }
 
 // Carga variables locales si existe app/env.php (no se versiona)
@@ -191,6 +185,36 @@ function setActiveVehiculoId(?int $id): void {
         $_SESSION['vehiculo_id'] = $id;
     }
 }
+
+/**
+ * Aplica ?vehiculo=ID solo si el vehículo existe.
+ * La selección es una preferencia de sesión, no una autorización.
+ */
+function applyRequestedVehiculo(): void {
+    if (!isset($_GET['vehiculo']) || !ctype_digit((string)$_GET['vehiculo'])) {
+        return;
+    }
+
+    $id = (int)$_GET['vehiculo'];
+    if ($id <= 0 || !hasTable('vehiculos')) {
+        return;
+    }
+
+    $db = getDb();
+    $stmt = $db->prepare('SELECT id FROM vehiculos WHERE id=? LIMIT 1');
+    if (!$stmt) {
+        return;
+    }
+    $stmt->bind_param('i', $id);
+    $stmt->execute();
+    $stmt->store_result();
+    if ($stmt->num_rows === 1) {
+        setActiveVehiculoId($id);
+    }
+    $stmt->close();
+}
+
+applyRequestedVehiculo();
 
 /**
  * Obtiene lista de vehículos si existe la tabla. Devuelve array vacía si no.

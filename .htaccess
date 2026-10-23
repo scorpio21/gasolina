@@ -13,6 +13,11 @@ Options -Indexes
   # Bloquear acceso directo a la carpeta sql/
   RewriteRule ^sql/ - [F,L]
 
+  # Nunca servir credenciales ni herramientas de diagnóstico, aunque se suban por error.
+  RewriteRule ^app/env\.php$ - [F,L,NC]
+  RewriteRule ^test/diagnostico\.php$ - [F,L,NC]
+  RewriteRule ^(?:version|phpinfo)\.php$ - [F,L,NC]
+
   # Forzar HTTPS (si hay SSL activo en el hosting) excepto en localhost
   RewriteCond %{HTTPS} !=on
   RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)$ [NC]
