@@ -1,33 +1,29 @@
 # Control Gasolina
 
-Aplicación web ligera para registrar repostajes, controlar vehículos y consultar el coste real de cada trayecto.
+Aplicación web para gestionar repostajes, vehículos y mantenimiento, con indicadores de consumo y costes. Funciona en local o en hosting PHP/MySQL y está adaptada a ordenador, tablet y móvil.
 
-## Funciones
+## Funcionalidades
 
-- Dashboard con gasto, kilómetros y consumo medio.
-- Historial con filtros, paginación y gráficas.
-- Cálculo automático de litros, importe y consumo.
-- Gestión de varios vehículos.
-- Mantenimientos por fecha o kilómetros.
-- Exportación del historial a PDF.
-- Diseño responsive para ordenador, tablet y móvil.
-- Protección CSRF y autenticación opcional.
+- Panel de control con gasto, kilómetros y consumo.
+- Historial paginado con filtros, gráficas y exportación PDF.
+- Cálculo automático de litros, importe y consumo por vehículo.
+- Gestión de vehículos y mantenimientos por fecha o kilometraje.
+- Protección CSRF, sesiones seguras y autenticación opcional.
 
 ## Requisitos
 
-- PHP 7.4 o superior.
+- PHP 8.2 o superior recomendado.
 - MySQL o MariaDB.
-- Apache, XAMPP, WAMP o un hosting compatible.
+- Apache, XAMPP, WAMP o hosting PHP compatible.
 
-## Instalación local
+## Instalación
 
-1. Clona el repositorio en `htdocs`.
-2. Crea una base de datos vacía.
-3. Importa `sql/gasolinaBD.sql`.
-4. Configura las credenciales en `.env` o `app/env.php`.
-5. Abre `http://localhost/Gasolina/`.
+1. Clona el repositorio dentro de `htdocs`.
+2. Crea la base de datos e importa el esquema disponible en `sql/`.
+3. Configura las credenciales en `app/env.php` o mediante variables de entorno.
+4. Abre `http://localhost/Gasolina/`.
 
-Ejemplo mínimo de `.env`:
+Ejemplo de configuración local:
 
 ```env
 DB_HOST=localhost
@@ -36,43 +32,28 @@ DB_PASS=
 DB_NAME=gasolina
 ```
 
-`app/env.php` y `.env` contienen configuración privada y no deben subirse al repositorio.
+Nunca publiques `app/env.php`, `.env`, copias de bases de datos, logs ni archivos de diagnóstico.
+
+## Despliegue
+
+Antes de actualizar, realiza una copia de seguridad de los archivos y de la base de datos. Después, sube el código, conserva la configuración privada del servidor y verifica el inicio, el historial, los vehículos y el registro de repostajes.
 
 ## Estructura
 
 ```text
-app/          Configuración y conexión a la base de datos
-css/          Estilos de la aplicación
-img/          Imágenes e iconos
-includes/     Componentes compartidos, como la navegación
-js/           Scripts y gráficas
-pages/        Historial, formularios, vehículos y mantenimientos
-sql/          Esquema y migraciones de base de datos
-index.php     Dashboard principal
+app/          Configuración y conexión
+css/          Estilos
+includes/     Componentes compartidos
+js/           JavaScript y gráficas
+pages/        Módulos de la aplicación
+sql/          Esquema y migraciones
+index.php     Panel principal
 ```
-
-## Despliegue
-
-1. Haz una copia de seguridad de la base de datos y de los archivos actuales.
-2. Sube el proyecto al directorio `htdocs` del hosting.
-3. Configura `app/env.php` con las credenciales del servidor.
-4. Comprueba el dashboard, el historial y la creación de un repostaje.
-
-No subas credenciales, bases de datos exportadas, logs ni archivos de diagnóstico.
 
 ## Desarrollo
 
-- Mantén las credenciales fuera de Git.
-- Usa commits pequeños y descriptivos.
-- Prueba localmente antes de publicar.
-- Ejecuta las migraciones SQL una sola vez y conserva una copia previa.
-
-## Próximos pasos
-
-- Filtros avanzados y duplicación del último repostaje.
-- Autonomía estimada por vehículo.
-- Revisión adicional de configuración, permisos y seguridad.
+Prueba los cambios en local antes de publicarlos y utiliza commits pequeños y descriptivos. Las migraciones SQL deben ejecutarse una sola vez y siempre después de realizar una copia de seguridad.
 
 ## Licencia
 
-MIT. Consulta `LICENSE` para más información.
+MIT. Consulta [`LICENSE`](LICENSE).
