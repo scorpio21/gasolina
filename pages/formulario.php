@@ -9,16 +9,33 @@ $vehiculoId = getActiveVehiculoId();
 $hasVehiculoColumn = hasColumn('consumos', 'vehiculo_id');
 $useVeh = $hasVehiculoColumn && $vehiculoId !== null;
 $useLleno = hasColumn('consumos','lleno');
+$hasGasolinera = hasColumn('consumos', 'gasolinera');
 $errores = [];
 $old = [
     'fecha' => '',
     'km_actuales' => '',
     'litros' => '',
     'precio_litro' => '',
+    'gasolinera' => '',
     'km_recorridos' => '',
     'importe_total' => '',
     'lleno' => '1'
 ];
+
+// Precarga los datos útiles del último repostaje sin reutilizar sus kilómetros.
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' && isset($_GET['duplicar']) && $_GET['duplicar'] === '1') {
+    $dupFields = 'fecha, litros, precio_litro';
+    if ($hasGasolinera) { $dupFields .= ', gasolinera'; }
+    if ($useLleno) { $dupFields .= ', lleno'; }
+    $dupWhere = $useVeh ? ' WHERE vehiculo_id='.(int)$vehiculoId : '';
+    $dup = $conexion->query("SELECT {$dupFields} FROM consumos{$dupWhere} ORDER BY fecha DESC, id DESC LIMIT 1");
+    if ($dup && ($last = $dup->fetch_assoc())) {
+        $old['fecha'] = date('Y-m-d');
+        $old['precio_litro'] = (string)($last['precio_litro'] ?? '');
+        if ($hasGasolinera) { $old['gasolinera'] = (string)($last['gasolinera'] ?? ''); }
+        if ($useLleno) { $old['lleno'] = (string)((int)($last['lleno'] ?? 1)); }
+    }
+}
 
 // No permitir nuevos repostajes sin vehículo cuando la base admite esa relación.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $hasVehiculoColumn && $vehiculoId === null) {
@@ -32,8 +49,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $old['km_actuales'] = isset($_POST['km_actuales']) ? (string)$_POST['km_actuales'] : '';
     $old['litros'] = isset($_POST['litros']) ? (string)$_POST['litros'] : '';
     $old['precio_litro'] = isset($_POST['precio_litro']) ? (string)$_POST['precio_litro'] : '';
+    $old['gasolinera'] = isset($_POST['gasolinera']) ? trim((string)$_POST['gasolinera']) : '';
     $old['km_recorridos'] = isset($_POST['km_recorridos']) ? (string)$_POST['km_recorridos'] : '';
     $old['importe_total'] = isset($_POST['importe_total']) ? (string)$_POST['importe_total'] : '';
+    $old['lleno'] = isset($_POST['lleno']) ? '1' : '0';
 
     $fecha = $old['fecha'];
     $km = (int)$old['km_actuales'];
@@ -66,6 +85,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     if ($old['litros'] !== '' && (!is_numeric($old['litros']) || (float)$old['litros'] <= 0)) {
         $errores['litros'] = 'Introduce litros válidos (> 0).';
     }
+    if ($hasGasolinera && strlen($old['gasolinera']) > 120) {
+        $errores['gasolinera'] = 'La gasolinera o localidad no puede superar 120 caracteres.';
+    }
     
     $llenoVal = isset($_POST['lleno']) ? 1 : 0;
 
@@ -83,33 +105,22 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         $consumo = ($km_recorridos > 0 && $litros > 0) ? ($litros / $km_recorridos) * 100 : 0.0;
 
-        // Inserción segura (importe_total es columna generada)
-        if ($useVeh && $useLleno) {
-            $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km, vehiculo_id, lleno)
-                                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        } elseif ($useVeh && !$useLleno) {
-            $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km, vehiculo_id)
-                                        VALUES (?, ?, ?, ?, ?, ?, ?)");
-        } elseif (!$useVeh && $useLleno) {
-            $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km, lleno)
-                                        VALUES (?, ?, ?, ?, ?, ?, ?)");
-        } else {
-            $stmt = $conexion->prepare("INSERT INTO consumos (fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km)
-                                        VALUES (?, ?, ?, ?, ?, ?)");
-        }
+        // Inserción segura (importe_total es columna generada).
+        $insertFields = ['fecha', 'km_actuales', 'litros', 'precio_litro', 'km_recorridos', 'consumo_100km'];
+        $insertTypes = 'siddid';
+        $insertValues = [$fecha, $km, $litros, $precio, $km_recorridos, $consumo];
+        if ($hasGasolinera) { $insertFields[] = 'gasolinera'; $insertTypes .= 's'; $insertValues[] = $old['gasolinera']; }
+        if ($useVeh) { $insertFields[] = 'vehiculo_id'; $insertTypes .= 'i'; $insertValues[] = $vehiculoId; }
+        if ($useLleno) { $insertFields[] = 'lleno'; $insertTypes .= 'i'; $insertValues[] = $llenoVal; }
+        $placeholders = implode(', ', array_fill(0, count($insertFields), '?'));
+        $stmt = $conexion->prepare('INSERT INTO consumos (' . implode(', ', $insertFields) . ') VALUES (' . $placeholders . ')');
         $insertado = false;
         if (!$stmt) {
             $errores[] = 'No se pudo preparar el alta del repostaje.';
         } else {
-            if ($useVeh && $useLleno) {
-                $stmt->bind_param("siddidii", $fecha, $km, $litros, $precio, $km_recorridos, $consumo, $vehiculoId, $llenoVal);
-            } elseif ($useVeh && !$useLleno) {
-                $stmt->bind_param("siddidi", $fecha, $km, $litros, $precio, $km_recorridos, $consumo, $vehiculoId);
-            } elseif (!$useVeh && $useLleno) {
-                $stmt->bind_param("siddidi", $fecha, $km, $litros, $precio, $km_recorridos, $consumo, $llenoVal);
-            } else {
-                $stmt->bind_param("siddid", $fecha, $km, $litros, $precio, $km_recorridos, $consumo);
-            }
+            $bindArgs = [$insertTypes];
+            foreach ($insertValues as $key => $value) { $bindArgs[] = &$insertValues[$key]; }
+            call_user_func_array([$stmt, 'bind_param'], $bindArgs);
             if ($stmt->execute()) {
                 $insertado = true;
             } else {
@@ -183,7 +194,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 <main class="container page-shell">
   <div class="page-heading">
     <div><div class="dashboard-kicker mb-1">Registro</div><h2>Nuevo repostaje</h2><p>Guarda los datos del ticket y deja que el sistema calcule el resto.</p></div>
-    <a class="btn btn-outline-primary" href="listar.php">Ver historial</a>
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-outline-secondary" href="formulario.php?duplicar=1">Duplicar último</a>
+      <a class="btn btn-outline-primary" href="listar.php">Ver historial</a>
+    </div>
   </div>
   <?php if (!empty($errores)): ?>
     <div class="alert alert-danger">
@@ -209,6 +223,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
       <?php if (isset($errores['km_actuales'])): ?><div class="invalid-feedback"><?php echo e($errores['km_actuales']); ?></div><?php endif; ?>
       <div class="form-text">Lectura del cuentakilómetros en el momento de repostar.</div>
     </div>
+    <?php if ($hasGasolinera): ?>
+    <div class="mb-3">
+      <label class="form-label" for="gasolinera">Gasolinera o localidad</label>
+      <input type="text" id="gasolinera" name="gasolinera" maxlength="120" class="form-control <?php echo isset($errores['gasolinera']) ? 'is-invalid' : ''; ?>" value="<?php echo e($old['gasolinera']); ?>" placeholder="Ej. Cádiz, Pontevedra...">
+      <?php if (isset($errores['gasolinera'])): ?><div class="invalid-feedback"><?php echo e($errores['gasolinera']); ?></div><?php endif; ?>
+    </div>
+    <?php endif; ?>
     <div class="mb-3">
       <label class="form-label">Precio por litro (€)</label>
       <input type="number" step="0.001" min="0.001" name="precio_litro" id="precio_litro" class="form-control <?php echo isset($errores['precio_litro']) ? 'is-invalid' : ''; ?>" required value="<?php echo e($old['precio_litro']); ?>">

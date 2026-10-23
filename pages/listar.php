@@ -7,6 +7,19 @@ $conexion = getDb();
 $BASE_URL = '..';
 $vehiculoId = getActiveVehiculoId();
 $useVeh = hasColumn('consumos','vehiculo_id') && $vehiculoId !== null;
+$hasGasolinera = hasColumn('consumos', 'gasolinera');
+
+// Filtros del historial
+$mes = isset($_GET['mes']) && preg_match('/^\d{4}-\d{2}$/', (string)$_GET['mes'])
+  ? (string)$_GET['mes'] : '';
+$gasolinera = $hasGasolinera ? trim((string)($_GET['gasolinera'] ?? '')) : '';
+$where = [];
+if ($useVeh) { $where[] = 'vehiculo_id='.(int)$vehiculoId; }
+if ($mes !== '') { $where[] = "DATE_FORMAT(fecha,'%Y-%m')='".$conexion->real_escape_string($mes)."'"; }
+if ($gasolinera !== '') {
+  $where[] = "gasolinera LIKE '%".$conexion->real_escape_string($gasolinera)."%'";
+}
+$whereSql = empty($where) ? '' : ' WHERE '.implode(' AND ', $where);
 
 // Selector de rango para gráficas (5/10/30)
 $rangoPermitido = [5, 10, 30];
@@ -26,16 +39,16 @@ if (!in_array($dir, ['asc', 'desc'], true)) { $dir = 'desc'; }
 
 // Total de filas para paginación
 $total = 0;
-$resTotal = $conexion->query("SELECT COUNT(*) AS c FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : ""));
+$resTotal = $conexion->query("SELECT COUNT(*) AS c FROM consumos" . $whereSql);
 if ($resTotal) { $rowC = $resTotal->fetch_assoc(); $total = (int)$rowC['c']; }
 
 // Datos de la tabla con LIMIT/OFFSET
-$resultado = $conexion->query("SELECT * FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : "") . " ORDER BY fecha $dir LIMIT $pp OFFSET $offset");
+$resultado = $conexion->query("SELECT * FROM consumos" . $whereSql . " ORDER BY fecha $dir, id $dir LIMIT $pp OFFSET $offset");
 
 // Datos para las gráficas (últimos N)
 $resGraficas = $conexion->query(
   "SELECT fecha, litros, precio_litro, importe_total, consumo_100km 
-   FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : "") . " ORDER BY fecha DESC LIMIT $r"
+   FROM consumos" . $whereSql . " ORDER BY fecha DESC, id DESC LIMIT $r"
 );
 $fechas = $importes = $litros = $precios = $consumos = [];
 if ($resGraficas) {
@@ -51,8 +64,7 @@ if ($resGraficas) {
 // Datos mensuales (para gráfico mensual de gasto)
 $labelsMensual = [];
 $totalesMensual = [];
-$whereMes = [];
-if ($useVeh) { $whereMes[] = "vehiculo_id=".(int)$vehiculoId; }
+$whereMes = $where;
 $whereMes[] = "fecha >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)";
 $sqlMes = "SELECT DATE_FORMAT(fecha,'%Y-%m') AS ym, SUM(importe_total) AS total FROM consumos"
   . (empty($whereMes) ? "" : (" WHERE ".implode(' AND ', $whereMes)))
@@ -94,10 +106,28 @@ if ($resMes) {
     <div><div class="dashboard-kicker mb-1">Seguimiento</div><h2>Historial de repostajes</h2><p>Consulta el coste y el rendimiento de cada trayecto.</p></div>
     <a class="btn btn-primary" href="formulario.php">+ Nuevo repostaje</a>
   </div>
+  <form method="get" class="card p-3 mb-4 shadow-sm">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label for="mes" class="form-label">Mes</label>
+        <input type="month" id="mes" name="mes" class="form-control" value="<?php echo e($mes); ?>">
+      </div>
+      <?php if ($hasGasolinera): ?>
+      <div class="col-md-5">
+        <label for="gasolinera" class="form-label">Gasolinera o localidad</label>
+        <input type="search" id="gasolinera" name="gasolinera" class="form-control" maxlength="120" value="<?php echo e($gasolinera); ?>" placeholder="Ej. Cádiz, Pontevedra...">
+      </div>
+      <?php endif; ?>
+      <div class="col-md-3 d-flex gap-2">
+        <button type="submit" class="btn btn-outline-primary">Filtrar</button>
+        <a class="btn btn-outline-secondary" href="listar.php">Limpiar</a>
+      </div>
+    </div>
+  </form>
   <?php
     // KPIs básicos para el histórico (€/km y €/mes promedio)
     $eurKm = 0.0; $avgMes = 0.0;
-    $resTot = $conexion->query("SELECT SUM(importe_total) AS gasto_total, MAX(km_actuales)-MIN(km_actuales) AS km_totales FROM consumos" . ($useVeh ? " WHERE vehiculo_id=".(int)$vehiculoId : ""));
+    $resTot = $conexion->query("SELECT SUM(importe_total) AS gasto_total, MAX(km_actuales)-MIN(km_actuales) AS km_totales FROM consumos" . $whereSql);
     if ($resTot) { $t = $resTot->fetch_assoc(); if (($t['km_totales'] ?? 0) > 0) { $eurKm = (float)$t['gasto_total'] / (float)$t['km_totales']; } }
     if (!empty($totalesMensual)) { $avgMes = array_sum($totalesMensual) / max(1,count($totalesMensual)); }
   ?>
@@ -154,7 +184,7 @@ if ($resMes) {
         <?php
           // Construir URL de toggle para fecha
           $toggleDir = ($dir === 'asc') ? 'desc' : 'asc';
-          $qsBase = http_build_query(['pp'=>$pp,'p'=>1,'dir'=>$toggleDir,'r'=>$r]);
+          $qsBase = http_build_query(['pp'=>$pp,'p'=>1,'dir'=>$toggleDir,'r'=>$r,'mes'=>$mes,'gasolinera'=>$gasolinera]);
         ?>
         <th>
           <a class="link-light text-decoration-none" href="?<?php echo $qsBase; ?>">
@@ -163,6 +193,7 @@ if ($resMes) {
         </th>
         <th>Km actuales</th>
         <th>Km recorridos</th>
+        <?php if ($hasGasolinera): ?><th>Gasolinera</th><?php endif; ?>
         <th>Litros</th>
         <th>Precio/L</th>
         <th>Importe (€)</th>
@@ -181,6 +212,7 @@ if ($resMes) {
         </td>
         <td><?php echo e((string)$row['km_actuales']); ?></td>
         <td><?php echo e((string)$row['km_recorridos']); ?></td>
+        <?php if ($hasGasolinera): ?><td><?php echo e((string)($row['gasolinera'] ?? '—')); ?></td><?php endif; ?>
         <td><?php echo e((string)$row['litros']); ?></td>
         <td><?php echo e(number_format((float)$row['precio_litro'], 2)); ?> €</td>
         <td><?php echo e(number_format((float)$row['importe_total'], 2)); ?> €</td>
@@ -209,8 +241,8 @@ if ($resMes) {
     $totalPaginas = ($pp > 0) ? (int)ceil($total / $pp) : 1;
     $desde = $total > 0 ? ($offset + 1) : 0;
     $hasta = min($offset + $pp, $total);
-    $buildQS = function($pagina) use ($pp, $dir, $r) {
-      return http_build_query(['p'=>$pagina,'pp'=>$pp,'dir'=>$dir,'r'=>$r]);
+    $buildQS = function($pagina) use ($pp, $dir, $r, $mes, $gasolinera) {
+      return http_build_query(['p'=>$pagina,'pp'=>$pp,'dir'=>$dir,'r'=>$r,'mes'=>$mes,'gasolinera'=>$gasolinera]);
     };
   ?>
   <div class="d-flex flex-wrap align-items-center justify-content-between mt-3">
@@ -221,6 +253,8 @@ if ($resMes) {
         <input type="hidden" name="p" value="1">
         <input type="hidden" name="dir" value="<?php echo e($dir); ?>">
         <input type="hidden" name="r" value="<?php echo (int)$r; ?>">
+        <input type="hidden" name="mes" value="<?php echo e($mes); ?>">
+        <input type="hidden" name="gasolinera" value="<?php echo e($gasolinera); ?>">
         <select id="pp" name="pp" class="form-select form-select-sm" onchange="this.form.submit()">
           <option value="10" <?php echo $pp===10?'selected':''; ?>>10</option>
           <option value="20" <?php echo $pp===20?'selected':''; ?>>20</option>

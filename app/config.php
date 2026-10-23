@@ -192,7 +192,10 @@ function setActiveVehiculoId(?int $id): void {
 function getVehiculos(): array {
     if (!hasTable('vehiculos')) return [];
     $db = getDb();
-    $res = $db->query("SELECT id, marca, modelo, anio, combustible, activo, COALESCE(foto_url,'') AS foto_url FROM vehiculos ORDER BY activo DESC, marca, modelo");
+    $capacitySelect = hasColumn('vehiculos', 'capacidad_deposito_l')
+        ? 'capacidad_deposito_l'
+        : 'NULL AS capacidad_deposito_l';
+    $res = $db->query("SELECT id, marca, modelo, anio, combustible, activo, {$capacitySelect}, COALESCE(foto_url,'') AS foto_url FROM vehiculos ORDER BY activo DESC, marca, modelo");
     $out = [];
     if ($res) {
         while ($r = $res->fetch_assoc()) { $out[] = $r; }

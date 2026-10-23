@@ -12,10 +12,13 @@ $useVeh = hasColumn('consumos','vehiculo_id') && $vehiculoId !== null;
 $vehiculos = function_exists('getVehiculos') ? getVehiculos() : [];
 $vehiculoNombre = 'Vehículo';
 $vehiculoFoto = '';
+$capacidadDeposito = null;
 foreach ($vehiculos as $v) {
     if ((int)$v['id'] === (int)($vehiculoId ?? 0)) {
         $vehiculoNombre = ($v['marca'] ?? '') . ' ' . ($v['modelo'] ?? '');
         $vehiculoFoto = isset($v['foto_url']) ? (string)$v['foto_url'] : '';
+        $capacidadDeposito = isset($v['capacidad_deposito_l']) && $v['capacidad_deposito_l'] !== null
+            ? (float)$v['capacidad_deposito_l'] : null;
         break;
     }
 }
@@ -33,6 +36,9 @@ $totales = $res ? $res->fetch_assoc() : [
     'consumo_medio' => 0,
 ];
 $eurKm = ((float)($totales['km_totales'] ?? 0) > 0) ? ((float)$totales['gasto_total'] / (float)$totales['km_totales']) : 0.0;
+$consumoMedio = (float)($totales['consumo_medio'] ?? 0);
+$autonomiaEstimada = ($capacidadDeposito !== null && $capacidadDeposito > 0 && $consumoMedio > 0)
+    ? ($capacidadDeposito / $consumoMedio) * 100 : null;
 
 // Por mes: gasto mensual (para KPIs y gráfica)
 $labelsMensual = [];
@@ -277,6 +283,20 @@ if ($ultimos) {
           <h5 class="card-title">€/mes (promedio)</h5>
           <p class="fs-4 fw-bold"><?php echo e(number_format($avgMes, 2)); ?> €/mes</p>
           <div class="text-muted small">Promedio mensual según historial</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card dashboard-metric metric-blue text-center shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">🛣️ Autonomía estimada</h5>
+          <?php if ($autonomiaEstimada !== null): ?>
+            <p class="fs-4 fw-bold"><?php echo e(number_format($autonomiaEstimada, 0)); ?> km</p>
+            <div class="text-muted small">Según capacidad del depósito y consumo medio</div>
+          <?php else: ?>
+            <p class="fs-4 fw-bold">—</p>
+            <div class="text-muted small">Completa capacidad y consumo para calcularla</div>
+          <?php endif; ?>
         </div>
       </div>
     </div>

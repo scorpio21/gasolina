@@ -6,6 +6,7 @@ require_auth();
 $conn = getDb();
 $vehiculoId = getActiveVehiculoId();
 $useVehiculoScope = hasColumn('consumos', 'vehiculo_id') && $vehiculoId !== null;
+$hasGasolinera = hasColumn('consumos', 'gasolinera');
 
 // Sanitizar/validar ID
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
@@ -51,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (($_POST['accion'] ?? '') !== 'eliminar') {
     // Recibir valores
     $fecha = trim($_POST['fecha'] ?? '');
+    $gasolinera = $hasGasolinera ? trim((string)($_POST['gasolinera'] ?? '')) : '';
     $kmActuales = isset($_POST['km_actuales']) ? (int)$_POST['km_actuales'] : null;
     $litros = isset($_POST['litros']) ? (float)$_POST['litros'] : null;
     $precioLitro = isset($_POST['precio_litro']) ? (float)$_POST['precio_litro'] : null;
@@ -62,43 +64,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($kmActuales === null || $kmActuales < 0) { $errores[] = 'Km actuales debe ser un número entero ≥ 0.'; }
     if ($litros === null || $litros <= 0) { $errores[] = 'Litros debe ser un número mayor que 0.'; }
     if ($precioLitro === null || $precioLitro <= 0) { $errores[] = 'Precio/L debe ser un número mayor que 0.'; }
+    if ($hasGasolinera && strlen($gasolinera) > 120) { $errores[] = 'La gasolinera o localidad no puede superar 120 caracteres.'; }
 
     if (empty($errores)) {
-        $sqlUpdate = "UPDATE consumos
-            SET fecha = ?, km_actuales = ?, litros = ?, precio_litro = ?, km_recorridos = ?, consumo_100km = ?
-            WHERE id = ?";
+        $updateFields = ['fecha = ?', 'km_actuales = ?', 'litros = ?', 'precio_litro = ?', 'km_recorridos = ?', 'consumo_100km = ?'];
+        $updateTypes = 'siddid';
+        $updateValues = [$fecha, $kmActuales, $litros, $precioLitro, $kmRecorridos, $consumo100];
+        if ($hasGasolinera) { $updateFields[] = 'gasolinera = ?'; $updateTypes .= 's'; $updateValues[] = $gasolinera; }
+        $updateTypes .= 'i';
+        $updateValues[] = $id;
+        $sqlUpdate = 'UPDATE consumos SET ' . implode(', ', $updateFields) . ' WHERE id = ?';
         if ($useVehiculoScope) {
             $sqlUpdate .= ' AND vehiculo_id = ?';
+            $updateTypes .= 'i';
+            $updateValues[] = $vehiculoId;
         }
         $stmt = $conn->prepare($sqlUpdate);
         if (!$stmt) {
             $errores[] = 'Error al preparar la consulta.';
         } else {
-            // Nota: pasar null en bind_param envía NULL a MySQL
-            if ($useVehiculoScope) {
-                $stmt->bind_param(
-                    'siddidii',
-                    $fecha,
-                    $kmActuales,
-                    $litros,
-                    $precioLitro,
-                    $kmRecorridos,
-                    $consumo100,
-                    $id,
-                    $vehiculoId
-                );
-            } else {
-                $stmt->bind_param(
-                    'siddidi',
-                    $fecha,
-                    $kmActuales,
-                    $litros,
-                    $precioLitro,
-                    $kmRecorridos,
-                    $consumo100,
-                    $id
-                );
-            }
+            $bindArgs = [$updateTypes];
+            foreach ($updateValues as $key => $value) { $bindArgs[] = &$updateValues[$key]; }
+            call_user_func_array([$stmt, 'bind_param'], $bindArgs);
             if ($stmt->execute()) {
                 // Redirigir con flag de éxito
                 header('Location: listar.php?actualizado=1');
@@ -113,7 +100,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Obtener datos actuales para precargar formulario, respetando el vehículo activo.
-$sqlSelect = 'SELECT fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km FROM consumos WHERE id = ?';
+$selectFields = 'fecha, km_actuales, litros, precio_litro, km_recorridos, consumo_100km';
+if ($hasGasolinera) { $selectFields .= ', gasolinera'; }
+$sqlSelect = 'SELECT ' . $selectFields . ' FROM consumos WHERE id = ?';
 if ($useVehiculoScope) {
     $sqlSelect .= ' AND vehiculo_id = ?';
 }
@@ -187,6 +176,12 @@ if (!$registro) {
         <label class="form-label">Km actuales</label>
         <input type="number" name="km_actuales" class="form-control" min="0" required value="<?php echo e((string)$registro['km_actuales']); ?>">
       </div>
+      <?php if ($hasGasolinera): ?>
+      <div class="col-md-4">
+        <label class="form-label" for="gasolinera">Gasolinera o localidad</label>
+        <input type="text" id="gasolinera" name="gasolinera" maxlength="120" class="form-control" value="<?php echo e((string)($registro['gasolinera'] ?? '')); ?>">
+      </div>
+      <?php endif; ?>
       <div class="col-md-4">
         <label class="form-label">Km recorridos (opcional)</label>
         <input type="number" name="km_recorridos" class="form-control" min="0" value="<?php echo $registro['km_recorridos'] !== null ? e((string)$registro['km_recorridos']) : ''; ?>">
