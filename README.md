@@ -34,6 +34,20 @@ DB_NAME=gasolina
 
 `app/env.php` y `.env` son configuraciones privadas: pueden existir en el servidor, pero nunca deben publicarse en GitHub. No subas copias de bases de datos, logs ni archivos de diagnóstico.
 
+Para proteger una instalación pública, activa la autenticación en la configuración de producción:
+
+```php
+'AUTH_ENABLED' => '1',
+'AUTH_USER' => 'tu_usuario',
+'AUTH_PASSWORD_HASH' => 'hash_generado_con_password_hash',
+```
+
+Genera el hash sin guardar la contraseña en el código:
+
+```bash
+php -r "echo password_hash('TU_CONTRASEÑA', PASSWORD_DEFAULT), PHP_EOL;"
+```
+
 ## Despliegue
 
 Antes de actualizar, realiza una copia de seguridad de los archivos y de la base de datos. Después, sube el código, conserva la configuración privada del servidor y verifica el inicio, el historial, los vehículos y el registro de repostajes.

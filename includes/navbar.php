@@ -89,7 +89,10 @@ foreach ($vehiculos as $v) {
         </li>
         <?php if (function_exists('auth_is_enabled') && auth_is_enabled() && !empty($_SESSION['authenticated'])): ?>
         <li class="nav-item">
-          <a class="nav-link" href="<?php echo $base; ?>/pages/logout.php">🚪 Salir</a>
+          <form method="post" action="<?php echo e($base); ?>/pages/logout.php" class="m-0">
+            <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+            <button type="submit" class="nav-link border-0 bg-transparent">🚪 Salir</button>
+          </form>
         </li>
         <?php endif; ?>
       </ul>

@@ -5,7 +5,13 @@ require_auth();
 
 $conn = getDb();
 $vehiculoId = getActiveVehiculoId();
-$useVehiculoScope = hasColumn('consumos', 'vehiculo_id') && $vehiculoId !== null;
+$hasVehiculoColumn = hasColumn('consumos', 'vehiculo_id');
+if ($hasVehiculoColumn && $vehiculoId === null) {
+    http_response_code(400);
+    echo 'Selecciona un vehículo antes de editar un registro.';
+    exit;
+}
+$useVehiculoScope = $hasVehiculoColumn;
 $hasGasolinera = hasColumn('consumos', 'gasolinera');
 
 // Sanitizar/validar ID
