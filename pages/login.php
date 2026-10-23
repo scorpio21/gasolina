@@ -64,12 +64,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <div class="mb-3">
           <label class="form-label" for="password">Contraseña</label>
-          <input class="form-control" id="password" name="password" type="password" required autocomplete="current-password">
+          <div class="input-group">
+            <input class="form-control" id="password" name="password" type="password" required autocomplete="current-password">
+            <button class="btn btn-outline-secondary password-toggle" type="button" id="togglePassword" aria-label="Mostrar contraseña" aria-pressed="false">👁️</button>
+          </div>
         </div>
         <button class="btn btn-primary" type="submit">Entrar</button>
       </form>
     </div>
   </div>
 </main>
+<script>
+(function () {
+  const password = document.getElementById('password');
+  const toggle = document.getElementById('togglePassword');
+  if (!password || !toggle) return;
+
+  toggle.addEventListener('click', function () {
+    const visible = password.type === 'text';
+    password.type = visible ? 'password' : 'text';
+    toggle.setAttribute('aria-pressed', String(!visible));
+    toggle.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
+    toggle.textContent = visible ? '👁️' : '🙈';
+  });
+})();
+</script>
 </body>
 </html>
