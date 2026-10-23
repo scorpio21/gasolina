@@ -187,36 +187,6 @@ function setActiveVehiculoId(?int $id): void {
 }
 
 /**
- * Aplica ?vehiculo=ID solo si el vehículo existe.
- * La selección es una preferencia de sesión, no una autorización.
- */
-function applyRequestedVehiculo(): void {
-    if (!isset($_GET['vehiculo']) || !ctype_digit((string)$_GET['vehiculo'])) {
-        return;
-    }
-
-    $id = (int)$_GET['vehiculo'];
-    if ($id <= 0 || !hasTable('vehiculos')) {
-        return;
-    }
-
-    $db = getDb();
-    $stmt = $db->prepare('SELECT id FROM vehiculos WHERE id=? LIMIT 1');
-    if (!$stmt) {
-        return;
-    }
-    $stmt->bind_param('i', $id);
-    $stmt->execute();
-    $stmt->store_result();
-    if ($stmt->num_rows === 1) {
-        setActiveVehiculoId($id);
-    }
-    $stmt->close();
-}
-
-applyRequestedVehiculo();
-
-/**
  * Obtiene lista de vehículos si existe la tabla. Devuelve array vacía si no.
  */
 function getVehiculos(): array {

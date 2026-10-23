@@ -39,10 +39,15 @@ foreach ($vehiculos as $v) {
           <ul class="dropdown-menu dropdown-menu-end">
             <?php foreach ($vehiculos as $v): ?>
               <li>
-                <a class="dropdown-item<?php echo ((int)$v['id'] === (int)($vehiculoActivo ?? 0)) ? ' active' : ''; ?>" href="?vehiculo=<?php echo (int)$v['id']; ?>">
+                <form method="post" action="<?php echo e($base); ?>/pages/seleccionar_vehiculo.php" class="m-0">
+                  <input type="hidden" name="csrf_token" value="<?php echo e(csrf_token()); ?>">
+                  <input type="hidden" name="id" value="<?php echo (int)$v['id']; ?>">
+                  <input type="hidden" name="return" value="<?php echo e((string)($_SERVER['REQUEST_URI'] ?? $homeUrl)); ?>">
+                  <button type="submit" class="dropdown-item<?php echo ((int)$v['id'] === (int)($vehiculoActivo ?? 0)) ? ' active' : ''; ?>">
                   <?php echo e($v['marca'] . ' ' . $v['modelo']); ?>
                   <?php if (!empty($v['anio'])): ?> (<?php echo e((string)$v['anio']); ?>)<?php endif; ?>
-                </a>
+                  </button>
+                </form>
               </li>
             <?php endforeach; ?>
           </ul>
